@@ -1,0 +1,2 @@
+# the_strip
+capstone 
