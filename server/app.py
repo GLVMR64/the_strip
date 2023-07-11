@@ -1,3 +1,4 @@
+from models import Comic, db
 import hashlib
 import time
 from flask import Flask
@@ -12,16 +13,16 @@ public_key = '1f2440e3320ab3d9b466c2c1699cc76a'
 private_key = 'c717b70ce1da6ea17908f2803eb728b3610d1af6'
 url = 'https://gateway.marvel.com/v1/public/comics'
 
+
 app = Flask(__name__)
 CORS(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
-db = SQLAlchemy(app)
-migrate = Migrate(app, db)
 api = Api(app)
-
 timestamp = str(time.time())
 hash_str = hashlib.md5(
     (timestamp + private_key + public_key).encode()).hexdigest()
+migrate = Migrate(app, db)
+db.init_app(app)
 
 
 @app.route('/')
@@ -41,7 +42,6 @@ class Comics(Resource):
         } for comic in comics]
 
         return serialized_comics, 200
-
 
 
 api.add_resource(Comics, '/comics')

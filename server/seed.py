@@ -1,6 +1,7 @@
-from app import app, db
+from app import app, db, public_key, timestamp, hash_str,url
 from models import User, Comic, Review
 import requests
+from sqlalchemy import func
 
 def seed_user():
     with app.app_context():
@@ -16,25 +17,29 @@ def seed_user():
 def seed_comics():
     with app.app_context():
         # Make API request to Marvel API
-        url = 'https://gateway.marvel.com/v1/public/comics'
         params = {
-            'apikey': '1f2440e3320ab3d9b466c2c1699cc76a',  
+            'apikey': public_key,
+            'ts': timestamp,
+            'hash': hash_str,
+            'limit': 20
         }
         response = requests.get(url, params=params)
         data = response.json()
 
-        # Process the response and store comics in the database
         results = data.get('data', {}).get('results', [])
         for comic_data in results:
             title = comic_data.get('title')
             description = comic_data.get('description', '')
-            user_id = 1
+            user = User.query.order_by(func.random()).first()
+            user_id = user.id if user else None
             thumbnail = comic_data.get('thumbnail', {})
             image_url = f"{thumbnail.get('path', '')}/portrait_uncanny.{thumbnail.get('extension', '')}"
             comic = Comic(title=title, description=description, user_id=user_id, image_url=image_url)
             db.session.add(comic)
 
         db.session.commit()
+
+
 
 def seed_reviews():
     with app.app_context():

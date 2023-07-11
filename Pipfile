@@ -10,6 +10,8 @@ flask-sqlalchemy = "*"
 flask-migrate = "*"
 alembic = "*"
 sqlalchemy = "*"
+requests = "*"
+flask-cors = "*"
 
 [dev-packages]
 
