@@ -1,30 +1,34 @@
 import React from 'react';
 import Link from 'next/link';
+import 'tailwindcss/tailwind.css';
 
 export default function Navbar() {
+  // Replace with actual user data
+  const user = {
+    id: 123,
+    name: 'John Doe',
+    // Add other user properties as needed
+  };
+
   return (
-    <nav className="bg-gray-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <Link href="/">
-                <a className="text-white font-bold text-xl">The Strip</a>
-              </Link>
-            </div>
-            <div className="hidden md:block">
-              <div className="ml-10 flex items-baseline space-x-4">
-                <Link href="/comics">
-                  <a className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
-                    Comics
-                  </a>
-                </Link>
-                {/* Add more links as needed */}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <nav className="bg-black py-4">
+      <ul className="flex items-center justify-between max-w-7xl mx-auto px-4">
+        <li>
+          <Link href="/">
+            <span className="text-white text-xl font-bold cursor-pointer">Home</span>
+          </Link>
+        </li>
+        <li>
+          <Link href="/comics">
+            <span className="text-white text-xl font-bold cursor-pointer">Comics</span>
+          </Link>
+        </li>
+        <li>
+          <Link href={`/collections/${user.id}`}>
+            <span className="text-white text-xl font-bold cursor-pointer">My Collection</span>
+          </Link>
+        </li>
+      </ul>
     </nav>
   );
 }
