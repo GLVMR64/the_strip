@@ -1,13 +1,15 @@
 import React from 'react';
 import Link from 'next/link';
-import 'tailwindcss/tailwind.css';
+import { useRouter } from 'next/router';
 
 export default function Navbar() {
-  // Replace with actual user data
-  const user = {
-    id: 123,
-    name: 'John Doe',
-    // Add other user properties as needed
+  const router = useRouter();
+
+  const handleLogout = () => {
+    // Perform any necessary logout logic (e.g., clear session, remove tokens, etc.)
+    
+    // Redirect the user to the login page
+    router.push('/login');
   };
 
   return (
@@ -24,9 +26,14 @@ export default function Navbar() {
           </Link>
         </li>
         <li>
-          <Link href={`/collections/${user.id}`}>
+          <Link href={`/collection`}>
             <span className="text-white text-xl font-bold cursor-pointer">My Collection</span>
           </Link>
+        </li>
+        <li>
+          <button className="text-white text-xl font-bold" onClick={handleLogout}>
+            Logout
+          </button>
         </li>
       </ul>
     </nav>
