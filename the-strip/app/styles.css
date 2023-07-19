@@ -1,3 +1,9 @@
-@import 'tailwindcss/dist/base.css';
-@import 'tailwindcss/dist/components.css';
-@import 'tailwindcss/dist/utilities.css';
+/* styles.css */
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* Add your custom global styles here */
+body {
+  font-family: 'Roboto', sans-serif;
+}

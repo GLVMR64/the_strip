@@ -2,7 +2,7 @@ import React from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { useRouter } from 'next/router';
-import 'tailwindcss/tailwind.css';
+
 
 export default function Login() {
   const router = useRouter();
@@ -31,10 +31,10 @@ export default function Login() {
         },
         body: JSON.stringify(values),
       });
-
+  
       if (response.ok) {
-        // Redirect to the home page after successful login
-        router.push('/home');
+        // Redirect to the root URL after successful login
+        router.push('/');
       } else if (response.status === 400) {
         // Handle validation errors
         const errors = await response.json();

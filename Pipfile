@@ -12,6 +12,7 @@ alembic = "*"
 sqlalchemy = "*"
 requests = "*"
 flask-cors = "*"
+bcrypt = "*"
 
 [dev-packages]
 

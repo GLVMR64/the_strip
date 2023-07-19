@@ -8,29 +8,17 @@ export default function ComicDetails({ comic, onClose }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const handleAddToCollection = () => {
-    const addToCollectionURL = `/comics/${comic.id}/add-to-collection`;
-    axios.post(addToCollectionURL)
+    const addToCollectionURL = 'http://127.0.0.1:5555/collection';
+    const comicData = { comic_id: comic.id };
+    axios
+      .post(addToCollectionURL, comicData)
       .then(response => {
         console.log(response.data.message);
-        // Handle success
+        // Handle success (e.g., show a success message to the user)
       })
       .catch(error => {
         console.error('Error adding comic to collection:', error);
-        // Handle error
-      });
-  };
-
-  const handleWriteReview = () => {
-    const writeReviewURL = `/comics/${comic.id}/write-review`;
-    const reviewData = { rating, comment };
-    axios.post(writeReviewURL, reviewData)
-      .then(response => {
-        console.log(response.data.message);
-        // Handle success
-      })
-      .catch(error => {
-        console.error('Error writing review:', error);
-        // Handle error
+        // Handle error (e.g., show an error message to the user)
       });
   };
 
@@ -45,50 +33,19 @@ export default function ComicDetails({ comic, onClose }) {
           <h2 className="text-2xl font-bold mb-4">{comic.title}</h2>
           <p>{comic.description}</p>
 
-          <div className="mt-4">
-            <label htmlFor="rating" className="block mb-2 font-medium">
-              Rating
-            </label>
-            <input
-              type="number"
-              id="rating"
-              name="rating"
-              value={rating}
-              onChange={(e) => setRating(parseInt(e.target.value))}
-              className="w-full p-2 border border-gray-300 rounded"
-            />
-          </div>
-
-          <div className="mt-4">
-            <label htmlFor="comment" className="block mb-2 font-medium">
-              Comment
-            </label>
-            <textarea
-              id="comment"
-              name="comment"
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded"
-            ></textarea>
-          </div>
-
           <div className="flex justify-between mt-4">
             <button type="button" className="bg-blue-500 text-white px-4 py-2 rounded" onClick={handleAddToCollection}>
               Add to Collection
             </button>
 
-            <button type="button" className="bg-blue-500 text-white px-4 py-2 rounded" onClick={handleWriteReview}>
-              Write Review
+            <button
+              type="button"
+              className="bg-gray-300 text-gray-700 px-4 py-2 rounded"
+              onClick={handleToggleExpand}
+            >
+              Close
             </button>
           </div>
-
-          <button
-            type="button"
-            className="bg-gray-300 text-gray-700 px-4 py-2 rounded mt-4"
-            onClick={handleToggleExpand}
-          >
-            Close
-          </button>
         </div>
       )}
     </Transition>
