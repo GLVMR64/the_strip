@@ -36,7 +36,7 @@ export default function Register() {
 
       if (response.ok) {
         // Redirect to the home page after successful register
-        router.push('/home');
+        router.push('/');
       } else if (response.status === 400) {
         // Handle validation errors
         const errors = await response.json();

@@ -1,5 +1,8 @@
-import { createContext } from 'react';
+import { createContext } from "react";
 
-const UserContext = createContext();
+const UserContext = createContext({
+  user: null,
+  updateUserContext: () => {}, // Add a default empty function
+});
 
 export default UserContext;
