@@ -1,14 +1,24 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import Navbar from '../app/components/Navbar';
 import ReactLoading from 'react-loading';
-import tailwindConfig from 'tailwind.config';
+import { UserContext } from "../app/components/utils/UserProvider";
 import axios from 'axios';
 
 export default function Comics() {
   const [comics, setComics] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedComics, setExpandedComics] = useState([]);
-  const [collection, setCollection] = useState([]);
+  
+  // const { userData, updateUser } = useContext(UserContext);
+
+  // const handleUpdateData = () => {
+  //   const newUserData = {
+  //     name: "John Doe",
+  //     email: "john@example.com",
+  //   };
+
+  //   updateUser(newUserData);
+  // };
 
   useEffect(() => {
     const fetchComics = async () => {
@@ -17,6 +27,8 @@ export default function Comics() {
         setComics(response.data);
         console.log(response)
         setLoading(false);
+        // handleUpdateData()
+        // console.log(userData)
       } catch (error) {
         console.error('Error fetching comics:', error);
         setComics([]);
@@ -27,19 +39,19 @@ export default function Comics() {
     fetchComics();
   }, []);
 
-  useEffect(() => {
-    const fetchCollection = async () => {
-      try {
-        const response = await axios.get('http://localhost:5555/collection'); // Replace with your API endpoint to fetch the user's collection
-        setCollection(response.data);
-      } catch (error) {
-        console.error('Error fetching collection:', error);
-        setCollection([]);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchCollection = async () => {
+  //     try {
+  //       const response = await axios.get('http://localhost:5555/collection'); // Replace with your API endpoint to fetch the user's collection
+  //       setCollection(response.data);
+  //     } catch (error) {
+  //       console.error('Error fetching collection:', error);
+  //       setCollection([]);
+  //     }
+  //   };
 
-    fetchCollection();
-  }, []);
+  //   fetchCollection();
+  // }, []);
 
   const toggleComicExpansion = (comicId) => {
     setExpandedComics((prevExpandedComics) => {

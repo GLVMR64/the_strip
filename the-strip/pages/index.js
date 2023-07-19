@@ -1,7 +1,7 @@
 import React from 'react';
 import Navbar from '../app/components/Navbar';
 import Login from './login';
-import 'tailwindcss/tailwind.css';
+
 
 export default function Home() {
   return (

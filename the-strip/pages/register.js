@@ -2,7 +2,7 @@ import React from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { useRouter } from 'next/router';
-import 'tailwindcss/tailwind.css';
+
 
 export default function Register() {
   const router = useRouter();
