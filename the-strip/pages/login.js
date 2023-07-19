@@ -48,7 +48,7 @@ export default function Login() {
 
   const handleRegister = () => {
     router.push("/register");
-  };
+  }
 
   return (
     <div className="flex justify-center items-center min-h-screen">

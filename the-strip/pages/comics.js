@@ -1,36 +1,24 @@
-import React, { useEffect, useState, useContext } from 'react';
-import Navbar from '../app/components/Navbar';
-import ReactLoading from 'react-loading';
-import { UserContext } from "../app/components/utils/UserProvider";
-import axios from 'axios';
+import React, { useEffect, useState, useContext } from "react";
+import Navbar from "../app/components/Navbar";
+import ReactLoading from "react-loading";
+import UserContext from "../app/components/utils/UserContext";
 
 export default function Comics() {
   const [comics, setComics] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [collection, setCollection] = useState([]);
+  const { user } = useContext(UserContext);
   const [expandedComics, setExpandedComics] = useState([]);
-  
-  // const { userData, updateUser } = useContext(UserContext);
-
-  // const handleUpdateData = () => {
-  //   const newUserData = {
-  //     name: "John Doe",
-  //     email: "john@example.com",
-  //   };
-
-  //   updateUser(newUserData);
-  // };
 
   useEffect(() => {
     const fetchComics = async () => {
       try {
-        const response = await axios.get('http://localhost:5555/comics');
-        setComics(response.data);
-        console.log(response)
+        const response = await fetch("http://localhost:5555/comics");
+        const data = await response.json();
+        setComics(data);
         setLoading(false);
-        // handleUpdateData()
-        // console.log(userData)
       } catch (error) {
-        console.error('Error fetching comics:', error);
+        console.error("Error fetching comics:", error);
         setComics([]);
         setLoading(false);
       }
@@ -38,20 +26,6 @@ export default function Comics() {
 
     fetchComics();
   }, []);
-
-  // useEffect(() => {
-  //   const fetchCollection = async () => {
-  //     try {
-  //       const response = await axios.get('http://localhost:5555/collection'); // Replace with your API endpoint to fetch the user's collection
-  //       setCollection(response.data);
-  //     } catch (error) {
-  //       console.error('Error fetching collection:', error);
-  //       setCollection([]);
-  //     }
-  //   };
-
-  //   fetchCollection();
-  // }, []);
 
   const toggleComicExpansion = (comicId) => {
     setExpandedComics((prevExpandedComics) => {
@@ -65,15 +39,17 @@ export default function Comics() {
 
   const addToCollection = async (comicId) => {
     try {
-      const response = await axios.post('http://localhost:5555/collection', { comicId }); // Replace with your API endpoint to add the comic to the user's collection
-      if (response.status === 201) {
-        // Comic added successfully, update the collection
-        setCollection((prevCollection) => [...prevCollection, response.data]);
-      } else {
-        console.error('Failed to add comic to collection:', response.status);
-      }
+      await fetch("http://localhost:5555/collection", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ comicId, id: user.id }),
+      })
+        .then((res) => res.json())
+        .then((data) => setCollection([...collection, data.collection]));
     } catch (error) {
-      console.error('Failed to add comic to collection:', error);
+      console.error("Failed to add comic to collection:", error);
     }
   };
 
@@ -81,21 +57,19 @@ export default function Comics() {
     <>
       <Navbar />
       <div className="flex flex-wrap items-center justify-center min-h-screen bg-gradient-to-r from-red-500 to-purple-900">
-      {loading ? (
-  <div className="flex items-center justify-center min-h-screen">
-    <ReactLoading type="spin" color="#ffffff" height={80} width={80} />
-  </div>
+        {loading ? (
+          <div className="flex items-center justify-center min-h-screen">
+            <ReactLoading type="spin" color="#ffffff" height={80} width={80} />
+          </div>
         ) : (
           comics.map((comic) => (
             <div
               key={comic.id}
               className="max-w-sm mx-4 mb-4 bg-white rounded-lg shadow-lg overflow-hidden"
-              style={{ backgroundSize: 'cover', backgroundPosition: 'center' }}
+              style={{ backgroundSize: "cover", backgroundPosition: "center" }}
               onClick={() => toggleComicExpansion(comic.id)}
-
             >
-
-              <img src={comic.image}/>
+              <img src={comic.image} alt={comic.title} />
               <div className="p-4">
                 <h3 className="text-lg font-semibold">{comic.title}</h3>
                 {expandedComics.includes(comic.id) && (

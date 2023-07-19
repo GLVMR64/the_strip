@@ -1,6 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import validates
 from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy.orm import relationship
 
 db = SQLAlchemy()
 
@@ -11,8 +12,7 @@ class User(db.Model):
     email = db.Column(db.String(100), nullable=False, unique=True)
     password_hash = db.Column(db.String(255), nullable=False)
     user_cookie = db.Column(db.String(), nullable=True)
-    comics = db.relationship('Comic', backref='user', lazy=True, cascade='all, delete')
-    reviews = db.relationship('Review', backref='user', lazy=True)
+    comics = relationship('Comic', secondary='user_comics', backref='users')
 
     @validates('password')
     def validate_password(self, key, password):
@@ -51,4 +51,10 @@ class Review(db.Model):
     comment = db.Column(db.Text)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     comic_id = db.Column(db.Integer, db.ForeignKey('comics.id'), nullable=False)
+
+class UserComic(db.Model):
+    __tablename__ = 'user_comics'
+
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    comic_id = db.Column(db.Integer, db.ForeignKey('comics.id'), primary_key=True)
 

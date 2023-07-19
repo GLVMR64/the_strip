@@ -169,29 +169,33 @@ def collection():
         return jsonify({'message': 'Unauthorized'}), 401
 
     if request.method == 'POST':
-        # Check if the user's cookie exists and is valid
-        cookie_value = request.cookies.get('cookie_value')
+        data = request.get_json()
+        id = data.get('id')
+        comic_id = data.get('comicId')
 
-        if cookie_value:
-            data = request.get_json()
-            comic_id = data.get('comic_id')
+        user = User.query.filter_by(id=id).first()
+        comic = Comic.query.get(comic_id)
 
-            user = User.query.filter_by(cookie_value=cookie_value).first()
-            comic = Comic.query.get(comic_id)
+        if not user:
+            return jsonify({'message': 'User not found'}), 404
 
-            if not comic:
-                return jsonify({'message': 'Comic not found'}), 404
+        if not comic:
+            return jsonify({'message': 'Comic not found'}), 404
 
-            if comic in user.comics:
-                return jsonify({'message': 'Comic already in collection'}), 400
+        if comic in user.comics:
+            return jsonify({
+                'message': 'Comic already in collection',
+            }), 400
 
-            user.comics.append(comic)
-            db.session.commit()
+        user.comics.append(comic)
+        db.session.commit()
+        
+        collection = [comic.title for comic in user.comics]  # Modify this line
 
-            return jsonify({'message': 'Comic added to collection'}), 201
-
-        # User is not logged in or the cookie is invalid, return an error message or redirect to the login page
-        return jsonify({'message': 'Unauthorized'}), 401
+        return jsonify({
+            'message': 'Comic added to collection',
+            'collection': f'{collection}'
+        }), 201
 
 
 @app.route('/comics/<comic_id>')
