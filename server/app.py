@@ -22,7 +22,8 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 
 api = Api(app)
 timestamp = str(time.time())
-hash_str = hashlib.md5((timestamp + private_key + public_key).encode()).hexdigest()
+hash_str = hashlib.md5(
+    (timestamp + private_key + public_key).encode()).hexdigest()
 migrate = Migrate(app, db)
 secret_key = os.urandom(24)
 db.init_app(app)
@@ -85,10 +86,12 @@ class Registration(Resource):
         response.headers.add('Access-Control-Allow-Methods', 'POST')
         response.headers.add('Access-Control-Allow-Credentials', 'true')
         response.headers.add('Access-Control-Expose-Headers', 'Set-Cookie')
-        response.headers.add('Set-Cookie', f'cookie_value={cookie_value}; Secure; SameSite=None; Expires={datetime.utcnow() + timedelta(hours=24)}')
+        response.headers.add(
+            'Set-Cookie', f'cookie_value={cookie_value}; Secure; SameSite=None; Expires={datetime.utcnow() + timedelta(hours=24)}')
 
         user.cookie_value = cookie_value
-        user.cookie_expiration = datetime.utcnow() + timedelta(hours=24)  # Set the expiration time
+        user.cookie_expiration = datetime.utcnow(
+        ) + timedelta(hours=24)  # Set the expiration time
 
         db.session.add(user)
         db.session.commit()
@@ -122,7 +125,11 @@ def login():
     cookie_value = secrets.token_hex(16)
 
     # Set the cookie in the response with an expiration time of 24 hours
-    response = jsonify({'message': 'Login successful'})
+    response = jsonify({
+        'message': 'Login successful',
+        'id': f"{user.id}"
+    })
+
     response.set_cookie('user_id', str(user.id),
                         expires=datetime.utcnow() + timedelta(hours=24),
                         secure=True, samesite='None')
@@ -226,4 +233,3 @@ def get_user_data():
 
 if __name__ == "__main__":
     app.run(port=5555, debug=True)
-

@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import UserContext from "../app/components/utils/UserContext";
@@ -7,8 +7,8 @@ import Navbar from "@/components/Navbar";
 
 export default function Login() {
   const router = useRouter();
-  const { updateUserContext, user } = useContext(UserContext);
-
+  const { logIn, user } = useContext(UserContext);
+  const [data, setData] = useState();
   // Initial form values
   const initialValues = {
     email: "",
@@ -23,33 +23,24 @@ export default function Login() {
     password: Yup.string().required("Password is required"),
   });
 
-  // Form submission
   const onSubmit = async (values, { setErrors }) => {
     try {
       // Handle login logic here (e.g., send API request)
-      const response = await fetch("http://127.0.0.1:5555/login", {
+      await fetch("http://127.0.0.1:5555/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(values),
-      });
-
-      if (response.ok) {
-        // Update user context to indicate logged in
-        updateUserContext({
-          loggedIn: true
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          // Call logIn with the ID value
+          logIn(data.id);
+          console.log(data);
+          // Redirect to the root URL after successful login
+          router.push("/");
         });
-        // Redirect to the root URL after successful login
-        router.push("/");
-      } else if (response.status === 400) {
-        // Handle validation errors
-        const errors = await response.json();
-        setErrors(errors);
-      } else {
-        // Handle other error cases
-        console.error("Login failed:", response.status);
-      }
     } catch (error) {
       console.error("Login failed:", error);
     }
