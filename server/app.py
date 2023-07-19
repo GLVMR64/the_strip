@@ -144,7 +144,6 @@ def login():
 
     return response, 200
 
-
 @app.route('/collection', methods=['GET', 'POST'])
 def collection():
     if request.method == 'GET':
@@ -187,15 +186,25 @@ def collection():
                 'message': 'Comic already in collection',
             }), 400
 
+        # Add the comic to the user's collection
         user.comics.append(comic)
         db.session.commit()
-        
-        collection = [comic.title for comic in user.comics]  # Modify this line
+
+        # Get the updated collection from the database
+        updated_collection = User.query.filter_by(id=id).first().comics
+
+        # Serialize the updated collection
+        serialized_collection = [{
+            'id': comic.id,
+            'title': comic.title,
+            'description': comic.description
+        } for comic in updated_collection]
 
         return jsonify({
             'message': 'Comic added to collection',
-            'collection': f'{collection}'
+            'collection': serialized_collection
         }), 201
+
 
 
 @app.route('/comics/<comic_id>')
