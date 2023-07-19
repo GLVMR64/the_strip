@@ -2,7 +2,8 @@ import { useContext, useEffect } from "react";
 import { useRouter } from "next/router";
 import { UserProvider } from "../app/components/utils/UserProvider";
 import UserContext from '../app/components/utils/UserContext'
-import "../app/styles.css"; // Import the global CSS file
+import "../app/globals.css"
+import '../app/tailwind.css';
 
 function MyApp({ Component, pageProps }) {
   // const router = useRouter();

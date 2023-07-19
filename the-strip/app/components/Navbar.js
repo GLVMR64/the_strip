@@ -5,13 +5,14 @@ import { useRouter } from "next/router";
 
 export default function Navbar() {
   const router = useRouter();
-  const { updateUserContext, user } = useContext(UserContext);
+  const { logOut, user } = useContext(UserContext);
 
   const handleLogout = () => {
     // Perform any necessary logout logic (e.g., clear session, remove tokens, etc.)
-    updateUserContext({
-      loggedIn: true,
+    logOut({
+      loggedIn: false,
     });
+    console.log(user);
 
     // Redirect the user to the login page
     router.push("/login");
