@@ -21,7 +21,7 @@ export default function Navbar() {
 
   return (
     <nav
-      className="py-4"
+      className="py-6 sticky top-0 z-10 bg-gray-900"
       style={{
         backgroundImage: "url(/marvel.jpg)", // Make sure the path is correct based on your public folder structure
         backgroundSize: "cover",
@@ -30,38 +30,47 @@ export default function Navbar() {
       }}
     >
       <ul className="flex items-center justify-between max-w-7xl mx-auto px-4">
-        <li>
-          <Link href="/">
-            <span className="text-white text-xl font-bold cursor-pointer">
-              Home
-            </span>
-          </Link>
-        </li>
         {userId && (
           <>
-            <li>
+            <li className="nav-item">
+              <Link href="/">
+                <span className="text-white text-2xl font-bold cursor-pointer hover:text-white hover:bg-red-500 hover:bg-opacity-100 px-4 py-2 rounded">
+                  Home
+                </span>
+              </Link>
+            </li>
+            <li className="nav-item">
               <Link href="/comics">
-                <span className="text-white text-xl font-bold cursor-pointer">
+                <span className="text-white text-2xl font-bold cursor-pointer hover:text-white hover:bg-red-500 hover:bg-opacity-100 px-4 py-2 rounded">
                   Comics
                 </span>
               </Link>
             </li>
-            <li>
+            <li className="nav-item">
               <Link href={`/collection/${userId}`}>
-                <span className="text-white text-xl font-bold cursor-pointer">
+                <span className="text-white text-2xl font-bold cursor-pointer hover:text-white hover:bg-red-500 hover:bg-opacity-100 px-4 py-2 rounded">
                   My Collection
                 </span>
               </Link>
             </li>
-            <li>
+            <li className="nav-item">
               <button
-                className="text-white text-xl font-bold"
+                className="text-white text-2xl font-bold hover:text-white hover:bg-red-500 hover:bg-opacity-100 px-4 py-2 rounded"
                 onClick={handleLogout}
               >
                 Logout
               </button>
             </li>
           </>
+        )}
+        {!userId && (
+          <li className="nav-item">
+            <Link href="/login">
+              <span className="text-white text-2xl font-bold cursor-pointer hover:text-white hover:bg-red-500 hover:bg-opacity-100 px-4 py-2 rounded">
+                Login
+              </span>
+            </Link>
+          </li>
         )}
       </ul>
     </nav>

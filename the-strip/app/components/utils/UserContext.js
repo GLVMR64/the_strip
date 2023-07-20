@@ -2,7 +2,7 @@ import { createContext } from "react";
 
 const UserContext = createContext({
   user: null,
-  updateUserContext: () => {}, // Add a default empty function
+  updateUserContext: () => {},
 });
 
 export default UserContext;

@@ -6,9 +6,9 @@ import UserContext from "../app/components/utils/UserContext";
 export default function Comics() {
   const [comics, setComics] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [collection, setCollection] = useState([]);
   const { user } = useContext(UserContext);
-  const [expandedComics, setExpandedComics] = useState([]);
+  const [expandedComicId, setExpandedComicId] = useState(null);
+  const [collection, setCollection] = useState([]); // Add collection state
 
   useEffect(() => {
     const fetchComics = async () => {
@@ -28,13 +28,9 @@ export default function Comics() {
   }, []);
 
   const toggleComicExpansion = (comicId) => {
-    setExpandedComics((prevExpandedComics) => {
-      if (prevExpandedComics.includes(comicId)) {
-        return prevExpandedComics.filter((id) => id !== comicId);
-      } else {
-        return [...prevExpandedComics, comicId];
-      }
-    });
+    setExpandedComicId((prevExpandedComicId) =>
+      prevExpandedComicId === comicId ? null : comicId
+    );
   };
 
   const addToCollection = async (comicId) => {
@@ -47,7 +43,7 @@ export default function Comics() {
         body: JSON.stringify({ comicId, id: user.id }),
       })
         .then((res) => res.json())
-        .then((data) => setCollection([...collection, data.collection]));
+        .then((data) => setCollection((prevCollection) => [...prevCollection, data.collection])); // Update the collection state with the new data
     } catch (error) {
       console.error("Failed to add comic to collection:", error);
     }
@@ -56,7 +52,7 @@ export default function Comics() {
   return (
     <>
       <Navbar />
-      <div className="flex flex-wrap items-center justify-center min-h-screen bg-gradient-to-r from-red-500 to-purple-900">
+      <div className="flex flex-wrap justify-center min-h-screen bg-gradient-to-r from-red-500 to-purple-900 p-4">
         {loading ? (
           <div className="flex items-center justify-center min-h-screen">
             <ReactLoading type="spin" color="#ffffff" height={80} width={80} />
@@ -65,25 +61,28 @@ export default function Comics() {
           comics.map((comic) => (
             <div
               key={comic.id}
-              className="max-w-sm mx-4 mb-4 bg-white rounded-lg shadow-lg overflow-hidden"
-              style={{ backgroundSize: "cover", backgroundPosition: "center" }}
+              className="max-w-sm m-4 cursor-pointer"
               onClick={() => toggleComicExpansion(comic.id)}
             >
-              <img src={comic.image} alt={comic.title} />
-              <div className="p-4">
-                <h3 className="text-lg font-semibold">{comic.title}</h3>
-                {expandedComics.includes(comic.id) && (
-                  <>
-                    <p>{comic.description}</p>
-                    <button
-                      className="bg-blue-500 text-white px-4 py-2 rounded mt-4"
-                      onClick={() => addToCollection(comic.id)}
-                    >
-                      Add to Collection
-                    </button>
-                  </>
-                )}
-              </div>
+              <img
+                src={comic.image}
+                alt={comic.title}
+                className={`w-full h-48 object-cover transition-transform ${
+                  expandedComicId === comic.id ? "transform -translate-y-2" : ""
+                }`}
+              />
+              {expandedComicId === comic.id && (
+                <div className="p-4">
+                  <h3 className="text-lg font-semibold mb-2">{comic.title}</h3>
+                  <p>{comic.description}</p>
+                  <button
+                    className="bg-blue-500 text-white px-4 py-2 rounded mt-4"
+                    onClick={() => addToCollection(comic.id)}
+                  >
+                    Add to Collection
+                  </button>
+                </div>
+              )}
             </div>
           ))
         )}

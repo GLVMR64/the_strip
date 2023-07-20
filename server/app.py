@@ -94,7 +94,8 @@ class Registration(Resource):
             'Set-Cookie', f'cookie_value={cookie_value}; Secure; SameSite=None; Expires={datetime.utcnow() + timedelta(hours=24)}')
 
         user.cookie_value = cookie_value
-        user.cookie_expiration = datetime.utcnow() + timedelta(hours=24)  # Set the expiration time
+        user.cookie_expiration = datetime.utcnow(
+        ) + timedelta(hours=24)  # Set the expiration time
 
         db.session.add(user)
         db.session.commit()
@@ -102,7 +103,6 @@ class Registration(Resource):
         # Redirect to the home page after successful registration
         response.headers['Location'] = '/'
         return response, 201
-
 
 
 @app.route('/login', methods=['POST'])
@@ -254,6 +254,22 @@ def get_user_data():
             return jsonify({"error": "User not found"}), 404
     else:
         return jsonify({"error": "Email parameter missing"}), 400
+
+
+@app.route('/user/<int:user_id>/edit-name', methods=['PATCH'])
+def edit_user_name(user_id):
+    data = request.get_json()
+    new_name = data.get('name')
+
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'message': 'User not found'}), 404
+
+    # Update the user's name
+    user.name = new_name
+    db.session.commit()
+
+    return jsonify({'message': 'User name updated successfully', 'name': new_name}), 200
 
 
 if __name__ == "__main__":
