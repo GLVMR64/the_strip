@@ -7,7 +7,7 @@ const Collection = ({ comics }) => {
   const [collection, setCollection] = useState([]);
   const [loading, setLoading] = useState(true); // Set initial loading state to true
 
-  // Update the collection state when the comics prop changes
+  // Update the collection state when the comics prop changes or when the user changes
   useEffect(() => {
     const fetchComics = async () => {
       try {
@@ -23,7 +23,7 @@ const Collection = ({ comics }) => {
     };
 
     fetchComics();
-  }, []);
+  }, [user.id, comics]); // Add user.id and comics to the dependency array
 
   function removeFromCollection(comicId) {
     try {
@@ -34,7 +34,14 @@ const Collection = ({ comics }) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ comicId, id: user.id }),
-      }).then((res) => res.json()); // Update the collection state with the new collection data
+      }).then((res) => {
+        // Update the collection state with the new collection data after successful removal
+        if (res.ok) {
+          setCollection((prevCollection) =>
+            prevCollection.filter((comic) => comic.id !== comicId)
+          );
+        }
+      });
     } catch (error) {
       console.error("Failed to remove comic from collection:", error);
     }
@@ -48,30 +55,26 @@ const Collection = ({ comics }) => {
           <ReactLoading type="spin" color="#ffffff" height={80} width={80} />
         </div>
       ) : (
-        Object.keys(collection).map((key) => {
-          const comic = collection[key];
-
-          return (
-            <div
-              key={comic.id}
-              style={{
-                border: "1px solid #ccc",
-                padding: "10px",
-                marginBottom: "10px",
-              }}
-            >
-              <h3>{comic.title}</h3>
-              <img
-                src={comic.image}
-                alt={comic.title}
-                style={{ maxWidth: "200px" }}
-              />
-              <button onClick={() => removeFromCollection(comic.id)}>
-                Remove from Collection
-              </button>
-            </div>
-          );
-        })
+        collection.map((comic) => (
+          <div
+            key={comic.id}
+            style={{
+              border: "1px solid #ccc",
+              padding: "10px",
+              marginBottom: "10px",
+            }}
+          >
+            <h3>{comic.title}</h3>
+            <img
+              src={comic.image}
+              alt={comic.title}
+              style={{ maxWidth: "200px" }}
+            />
+            <button onClick={() => removeFromCollection(comic.id)}>
+              Remove from Collection
+            </button>
+          </div>
+        ))
       )}
     </div>
   );

@@ -66,6 +66,10 @@ class Registration(Resource):
         if existing_user:
             return {'message': 'User with the same email already exists'}, 409
 
+        # Check if the password meets the minimum length requirement (at least 8 characters)
+        if len(password) < 8:
+            return {'message': 'Password must be at least 8 characters long'}, 400
+
         # Hash the password
         password_hash = generate_password_hash(password, method='sha256')
 
@@ -90,16 +94,15 @@ class Registration(Resource):
             'Set-Cookie', f'cookie_value={cookie_value}; Secure; SameSite=None; Expires={datetime.utcnow() + timedelta(hours=24)}')
 
         user.cookie_value = cookie_value
-        user.cookie_expiration = datetime.utcnow(
-        ) + timedelta(hours=24)  # Set the expiration time
+        user.cookie_expiration = datetime.utcnow() + timedelta(hours=24)  # Set the expiration time
 
         db.session.add(user)
         db.session.commit()
 
+        # Redirect to the home page after successful registration
+        response.headers['Location'] = '/'
         return response, 201
 
-
-api.add_resource(Registration, '/register')
 
 
 @app.route('/login', methods=['POST'])

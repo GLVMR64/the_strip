@@ -1,7 +1,9 @@
-import React from 'react';
-import { Formik, Form, Field, ErrorMessage } from 'formik';
-import * as Yup from 'yup';
-import { useRouter } from 'next/router';
+import React from "react";
+import { Formik, Form, Field, ErrorMessage } from "formik";
+import * as Yup from "yup";
+import { useRouter } from "next/router";
+import Navbar from "@/components/Navbar";
+import Link from "next/link";
 
 
 export default function Register() {
@@ -9,16 +11,16 @@ export default function Register() {
 
   // Initial form values
   const initialValues = {
-    name: '',
-    email: '',
-    password: '',
+    name: "",
+    email: "",
+    password: "",
   };
 
   // Form validation schema
   const validationSchema = Yup.object({
-    name: Yup.string().required('Name is required'),
-    email: Yup.string().email('Invalid email address').required('Email is required'),
-    password: Yup.string().required('Password is required'),
+    name: Yup.string().required("Name is required"),
+    email: Yup.string().email("Invalid email address").required("Email is required"),
+    password: Yup.string().required("Password is required"),
   });
 
   // Form submission
@@ -26,36 +28,39 @@ export default function Register() {
     try {
       // Handle register logic here (e.g., send API request)
       // Example:
-      const response = await fetch('http://127.0.0.1:5555/register', {
-        method: 'POST',
+      const response = await fetch("http://127.0.0.1:5555/register", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(values),
       });
 
+
       if (response.ok) {
         // Redirect to the home page after successful register
-        router.push('/');
+        router.push("/");
       } else if (response.status === 400) {
         // Handle validation errors
         const errors = await response.json();
         setErrors(errors);
       } else {
         // Handle other error cases
-        console.error('Registration failed:', response.status);
+        console.error("Registration failed:", response.status);
       }
     } catch (error) {
-      console.error('Registration failed:', error);
+      console.error("Registration failed:", error);
     }
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen">
+    <div className="flex justify-center items-center min-h-screen bg-gray-100">
+      <Navbar/>
       <div className="bg-white p-8 rounded shadow-md">
         <h1 className="text-2xl font-bold mb-4">Register</h1>
         <Formik initialValues={initialValues} validationSchema={validationSchema} onSubmit={onSubmit}>
-          <Form>
+          
+          <Form className="text-black"> {/* Add the text-black class */}
             <div className="mb-4">
               <label htmlFor="name" className="block mb-2 font-medium">
                 Name
@@ -78,7 +83,15 @@ export default function Register() {
               </label>
               <Field type="password" id="password" name="password" className="w-full p-2 border border-gray-300 rounded" />
               <ErrorMessage name="password" component="div" className="text-red-500" />
-            </div>
+            </div> 
+            {/* Link to login page */}
+          <div className="text-center mt-4">
+            Already have an account?{" "}
+            <Link href="/login">
+              <a className="text-blue-500">Login here</a>
+            </Link>
+          </div>
+
 
             <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
               Register

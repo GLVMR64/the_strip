@@ -48,74 +48,80 @@ export default function Login() {
 
   const handleRegister = () => {
     router.push("/register");
-  }
+  };
 
   return (
-    <div className="flex justify-center items-center min-h-screen">
+    <div>
       <Navbar />
-      <div className="bg-white p-8 rounded shadow-md">
-        <h1 className="text-2xl font-bold mb-4">Login</h1>
-        <Formik
-          initialValues={initialValues}
-          validationSchema={validationSchema}
-          onSubmit={onSubmit}
-        >
-          <Form>
-            <div className="mb-4">
-              <label htmlFor="email" className="block mb-2 font-medium">
-                Email
-              </label>
-              <Field
-                type="email"
-                id="email"
-                name="email"
-                className="w-full p-2 border border-gray-300 rounded"
-              />
-              <ErrorMessage
-                name="email"
-                component="div"
-                className="text-red-500"
-              />
-            </div>
+      <div className="flex justify-center items-center min-h-screen bg-gray-100">
+        <div className="bg-white p-8 rounded shadow-md w-96">
+          <h1 className="text-3xl font-bold mb-6 text-center">Login</h1>
+          <Formik
+            initialValues={initialValues}
+            validationSchema={validationSchema}
+            onSubmit={onSubmit}
+          >
+            <Form>
+              
+              {/* Email Field */}
+              <div className="mb-4">
+                <label htmlFor="email" className="block mb-2 font-medium text-black">
+                  Email
+                </label>
+                <Field
+                  type="email"
+                  id="email"
+                  name="email"
+                  className="w-full p-2 border border-gray-300 rounded text-black"
+                />
+                <ErrorMessage
+                  name="email"
+                  component="div"
+                  className="text-red-500"
+                />
+              </div>
 
-            <div className="mb-4">
-              <label htmlFor="password" className="block mb-2 font-medium">
-                Password
-              </label>
-              <Field
-                type="password"
-                id="password"
-                name="password"
-                className="w-full p-2 border border-gray-300 rounded"
-              />
-              <ErrorMessage
-                name="password"
-                component="div"
-                className="text-red-500"
-              />
-            </div>
+               {/* Password Field */}
+               <div className="mb-4">
+                
+                <label htmlFor="password" className="block mb-2 font-medium text-black">
+                  Password
+                </label>
+                <Field
+                  type="password"
+                  id="password"
+                  name="password"
+                  className="w-full p-2 border border-gray-300 rounded text-black"
+                />
+                <ErrorMessage
+                  name="password"
+                  component="div"
+                  className="text-red-500"
+                />
+              </div>
 
-            <button
-              type="submit"
-              className="bg-blue-500 text-white px-4 py-2 rounded"
-            >
-              Login
-            </button>
+              <button
+                type="submit"
+                className="bg-blue-500 text-white px-4 py-2 rounded w-full"
+              >
+                Login
+              </button>
 
-            {!user && (
-              <p className="mt-2">
-                Not registered yet?{" "}
-                <button
-                  type="button"
-                  className="text-blue-500 underline"
-                  onClick={handleRegister}
-                >
-                  Register here
-                </button>
-              </p>
-            )}
-          </Form>
-        </Formik>
+              {!user && (
+                <p className="mt-4 text-center">
+                  Not registered yet?{" "}
+                  <button
+                    type="button"
+                    className="text-blue-500 underline"
+                    onClick={handleRegister}
+                  >
+                    Register here
+                  </button>
+                </p>
+              )}
+            </Form>
+          </Formik>
+        </div>
       </div>
     </div>
   );
