@@ -8,18 +8,26 @@ export default function Navbar() {
   const { logOut, user } = useContext(UserContext);
 
   const handleLogout = () => {
-    // Perform any necessary logout logic (e.g., clear session, remove tokens, etc.)
     logOut({
       loggedIn: false,
     });
     console.log(user);
-
-    // Redirect the user to the login page
     router.push("/login");
   };
 
+  // Check if the user object exists before accessing its 'id' property
+  const userId = user?.id;
+
   return (
-    <nav className="bg-black py-4">
+    <nav
+    className="py-4"
+    style={{
+      backgroundImage: "url(/marvel.jpg)", // Make sure the path is correct based on your public folder structure
+      backgroundSize: "cover",
+      backgroundRepeat: "no-repeat",
+      backgroundPosition: "center",
+    }}
+  >
       <ul className="flex items-center justify-between max-w-7xl mx-auto px-4">
         <li>
           <Link href="/">
@@ -35,13 +43,16 @@ export default function Navbar() {
             </span>
           </Link>
         </li>
-        <li>
-          <Link href={`/collection`}>
-            <span className="text-white text-xl font-bold cursor-pointer">
-              My Collection
-            </span>
-          </Link>
-        </li>
+        {/* Use the 'userId' variable to conditionally render the link */}
+        {userId && (
+          <li>
+            <Link href={`/collection/${userId}`}>
+              <span className="text-white text-xl font-bold cursor-pointer">
+                My Collection
+              </span>
+            </Link>
+          </li>
+        )}
         <li>
           <button
             className="text-white text-xl font-bold"

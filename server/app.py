@@ -145,26 +145,23 @@ def login():
     return response, 200
 
 
-@app.route('/collection', methods=['GET', 'POST'])
-def collection():
+@app.route('/collection/<int:user_id>', methods=['GET', 'POST'])
+def collection(user_id):  # Add the user_id as an argument
     if request.method == 'GET':
-        # Check if the user's cookie exists and is valid
-        user_id = request.cookies.get('user_id')
+        # You don't need to use request.args.get('user_id') here anymore.
 
-        if user_id:
-            user_comics = db.session.query(Comic).join(UserComic).filter(UserComic.user_id == user_id).all()
-            if user_comics:
-                serialized_comics = [{
-                    'id': comic.id,
-                    'title': comic.title,
-                    'description': comic.description,
-                    'image': comic.image_url
-                } for comic in user_comics]
-                return jsonify(serialized_comics), 200
-            else:
-                return jsonify({'message': 'No comics found in the collection'}), 404
+        user_comics = db.session.query(Comic).join(
+            UserComic).filter(UserComic.user_id == user_id).all()
+        if user_comics:
+            serialized_comics = [{
+                'id': comic.id,
+                'title': comic.title,
+                'description': comic.description,
+                'image': comic.image_url
+            } for comic in user_comics]
+            return jsonify(serialized_comics), 200
         else:
-            return jsonify({'message': 'Unauthorized'}), 401
+            return jsonify({'message': 'No comics found for the user'}), 404
 
     if request.method == 'POST':
         data = request.get_json()
@@ -187,13 +184,36 @@ def collection():
 
         user.comics.append(comic)
         db.session.commit()
-        
+
         collection = [comic.title for comic in user.comics]  # Modify this line
 
         return jsonify({
             'message': 'Comic added to collection',
             'collection': f'{collection}'
         }), 201
+
+
+@app.route('/collection/<int:user_id>/<int:comic_id>', methods=['DELETE'])
+def delete_comic_from_collection(user_id, comic_id):
+    # Check if the user exists in the database
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'message': 'User not found'}), 404
+
+    # Check if the comic exists in the database
+    comic = Comic.query.get(comic_id)
+    if not comic:
+        return jsonify({'message': 'Comic not found'}), 404
+
+    # Check if the comic is in the user's collection
+    if comic not in user.comics:
+        return jsonify({'message': 'Comic not found in the user\'s collection'}), 404
+
+    # Remove the comic from the user's collection and commit the changes to the database
+    user.comics.remove(comic)
+    db.session.commit()
+
+    return jsonify({'message': 'Comic successfully removed from the user\'s collection', 'collection': f'{serialized_comics}'}), 200
 
 
 @app.route('/comics/<comic_id>')

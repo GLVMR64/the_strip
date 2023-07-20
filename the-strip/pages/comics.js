@@ -13,7 +13,7 @@ export default function Comics() {
   useEffect(() => {
     const fetchComics = async () => {
       try {
-        const response = await fetch("http://localhost:5555/comics");
+        const response = await fetch("http://127.0.0.1:5555/comics");
         const data = await response.json();
         setComics(data);
         setLoading(false);
@@ -39,7 +39,7 @@ export default function Comics() {
 
   const addToCollection = async (comicId) => {
     try {
-      await fetch("http://localhost:5555/collection", {
+      await fetch(`http://127.0.0.1:5555/collection/${user.id}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

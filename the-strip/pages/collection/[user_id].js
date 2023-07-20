@@ -1,31 +1,32 @@
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
-import Navbar from '../app/components/Navbar';
-import Collection from '@/components/Collection';
-export default function Collection() {
+import React, { useEffect, useState, useContext } from "react";
+import UserContext from "@/components/utils/UserContext";
+import { useRouter } from "next/router";
+import Navbar from "../../app/components/Navbar";
+import Collection from "@/components/Collection";
+
+export default function CollectionsPage() {
   const router = useRouter();
   const { user_id } = router.query;
-
+  const { user } = useContext(UserContext);
   const [collectionData, setCollectionData] = useState(null);
 
   useEffect(() => {
     // Fetch the user's collection data based on the ID
     const fetchCollectionData = async () => {
       try {
-        const response = await fetch(`http://localhost:5555/collection/${user_id}`, {
-          credentials: 'include',
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setCollectionData(data);
-        } else {
-          console.error('Failed to fetch collection data:', response.status);
-        }
+        await fetch(`http://127.0.0.1:5555/collection/${user_id}`)
+          .then((r) => r.json())
+          .then((data) => {
+            setCollectionData(data);
+          });
       } catch (error) {
-        console.error('Failed to fetch collection data:', error);
+        console.error("Failed to fetch collection data:", error);
       }
     };
+
+    if(collectionData){
+      // store data in the user context
+    }
 
     if (user_id) {
       fetchCollectionData();
@@ -40,19 +41,7 @@ export default function Collection() {
           <h1 className="text-2xl font-bold mb-4">Collection</h1>
           <p className="text-white mb-4">User ID: {user_id}</p>
           {collectionData ? (
-            <ul className="grid grid-cols-1 gap-6">
-              {collectionData.map((comic) => (
-                <li
-                  key={comic.id}
-                  className="bg-white rounded-lg shadow-lg overflow-hidden"
-                >
-                  <div className="p-4">
-                    <h2 className="text-xl font-semibold mb-2">{comic.title}</h2>
-                    <p className="text-gray-500">{comic.description}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <Collection comics={collectionData}/>
           ) : (
             <p className="text-white">Loading collection data...</p>
           )}
