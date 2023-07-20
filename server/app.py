@@ -6,7 +6,7 @@ from flask_migrate import Migrate
 from datetime import datetime, timedelta
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash
-from models import db, User, Comic
+from models import db, User, Comic, UserComic
 import hashlib
 import secrets
 import time
@@ -144,28 +144,27 @@ def login():
 
     return response, 200
 
+
 @app.route('/collection', methods=['GET', 'POST'])
 def collection():
     if request.method == 'GET':
         # Check if the user's cookie exists and is valid
-        cookie_value = request.cookies.get('cookie_value')
+        user_id = request.cookies.get('user_id')
 
-        if cookie_value:
-            user = User.query.filter_by(cookie_value=cookie_value).first()
-
-            if user:
-                saved_comics = user.comics
-
+        if user_id:
+            user_comics = db.session.query(Comic).join(UserComic).filter(UserComic.user_id == user_id).all()
+            if user_comics:
                 serialized_comics = [{
                     'id': comic.id,
                     'title': comic.title,
-                    'description': comic.description
-                } for comic in saved_comics]
-
+                    'description': comic.description,
+                    'image': comic.image_url
+                } for comic in user_comics]
                 return jsonify(serialized_comics), 200
-
-        # User is not logged in or the cookie is invalid, return an error message or redirect to the login page
-        return jsonify({'message': 'Unauthorized'}), 401
+            else:
+                return jsonify({'message': 'No comics found in the collection'}), 404
+        else:
+            return jsonify({'message': 'Unauthorized'}), 401
 
     if request.method == 'POST':
         data = request.get_json()
@@ -186,25 +185,15 @@ def collection():
                 'message': 'Comic already in collection',
             }), 400
 
-        # Add the comic to the user's collection
         user.comics.append(comic)
         db.session.commit()
-
-        # Get the updated collection from the database
-        updated_collection = User.query.filter_by(id=id).first().comics
-
-        # Serialize the updated collection
-        serialized_collection = [{
-            'id': comic.id,
-            'title': comic.title,
-            'description': comic.description
-        } for comic in updated_collection]
+        
+        collection = [comic.title for comic in user.comics]  # Modify this line
 
         return jsonify({
             'message': 'Comic added to collection',
-            'collection': serialized_collection
+            'collection': f'{collection}'
         }), 201
-
 
 
 @app.route('/comics/<comic_id>')
