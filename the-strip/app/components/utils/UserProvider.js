@@ -21,7 +21,7 @@ export const UserProvider = ({ children }) => {
 
   const updateUserName = async (name) => {
     try {
-      const response = await fetch(`/collection/${user.id}/`, {
+      const response = await fetch(`http://127.0.0.1:5555/collection/${user.id}/`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

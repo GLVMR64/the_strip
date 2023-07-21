@@ -104,6 +104,8 @@ class Registration(Resource):
         response.headers['Location'] = '/'
         return response, 201
 
+# Use a different route for the Registration resource
+api.add_resource(Registration, '/register')  # Change the route to '/register'
 
 @app.route('/login', methods=['POST'])
 def login():
