@@ -3,6 +3,7 @@ import UserContext from '../components/utils/UserContext';
 import ReactLoading from 'react-loading';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useHistory } from 'react-router-dom'; // Import useHistory hook
 
 const Collection = () => {
   const { user } = useContext(UserContext);
@@ -11,6 +12,7 @@ const Collection = () => {
   const [expandedComicId, setExpandedComicId] = useState(null);
   const [newName, setNewName] = useState('');
 
+  const history = useHistory(); // Move the useHistory hook to the top
   const fetchCollection = async () => {
     try {
       const response = await fetch(`http://127.0.0.1:5555/collection/${user.id}`);
@@ -26,19 +28,19 @@ const Collection = () => {
       setLoading(false);
     }
   };
-
+  
   const handleEditName = async () => {
     try {
-      const response = await fetch(`http://127.0.0.1:5555/user/${user.id}`, {
+      const response = await fetch(`http://127.0.0.1:5555/user/${user.id}/edit-name`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ name: newName }),
       });
-
+      
       if (response.ok) {
-        alert('User name updated successfully.');
+        toast.success('Account updated successfully.');
       } else {
         throw new Error('Failed to update user name');
       }
@@ -46,15 +48,17 @@ const Collection = () => {
       console.error('Error updating user name:', error);
     }
   };
-
+  
   const handleDeleteAccount = async () => {
     try {
-      const response = await fetch(`http://127.0.0.1:5555/collection/${user.id}`, {
+      const response = await fetch(`http://127.0.0.1:5555/user/${user.id}`, {
         method: 'DELETE',
       });
 
       if (response.ok) {
-        alert('Account deleted successfully.');
+        
+        history.push('/register'); // Navigate to the register page
+        toast.success('Account deleted successfully.');
       } else {
         throw new Error('Failed to delete account');
       }
@@ -62,7 +66,6 @@ const Collection = () => {
       console.error('Error deleting account:', error);
     }
   };
-
   useEffect(() => {
     fetchCollection();
   }, [user.id]); // Fetch collection whenever userId changes
@@ -73,18 +76,20 @@ const Collection = () => {
   
   return (
     <>
-            <div>
-                  <label htmlFor="newName">New Name:</label>
-                  <input
-                    type="text"
-                    id="newName"
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                  />
-                    <button onClick={handleEditName}>Update Name</button>
-                </div>
-        {/* Option to delete the user's account */}
-        <button onClick={handleDeleteAccount}>Delete Account</button>
+      <div>
+        <label htmlFor="newName">New Name:</label>
+        <input
+          type="text"
+          id="newName"
+          value={newName}
+          onChange={(e) => setNewName(e.target.value)}
+        />
+        <button onClick={handleEditName}>Update Name</button>
+      </div>
+
+      {/* Option to delete the user's account */}
+      <button onClick={handleDeleteAccount}>Delete Account</button>
+
       <div className="flex flex-wrap justify-center min-h-screen bg-gradient-to-r from-red-500 to-purple-900 p-4">
         {loading ? (
           <div className="flex items-center justify-center min-h-screen">
@@ -113,12 +118,10 @@ const Collection = () => {
               )}
             </div>
           ))
-          ) : (
-            <p>No comics found in the collection.</p>
-            )}
+        ) : (
+          <p>No comics found in the collection.</p>
+        )}
       </div>
-      {/* Edit Name Section */}
-
     </>
   );
 };
