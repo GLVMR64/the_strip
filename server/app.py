@@ -262,7 +262,7 @@ def get_user_data():
         return jsonify({"error": "Email parameter missing"}), 400
 
 
-@app.route('/user/<int:user_id>/edit-name', methods=['PATCH'])
+@app.route('/collection/<int:user_id>/', methods=['PATCH'])
 def edit_user_name(user_id):
     data = request.get_json()
     new_name = data.get('name')
@@ -279,7 +279,7 @@ def edit_user_name(user_id):
 
 
 
-@app.route('/user/<int:user_id>', methods=['DELETE'])
+@app.route('/collection/<int:user_id>', methods=['DELETE'])
 def delete_user(user_id):
     # Check if the user exists in the database
     user = User.query.get(user_id)
