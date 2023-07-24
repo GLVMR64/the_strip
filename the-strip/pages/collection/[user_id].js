@@ -39,7 +39,7 @@ export default function CollectionsPage() {
       <div className="min-h-screen bg-gradient-to-r from-red-500 to-purple-900">
         <div className="max-w-7xl mx-auto py-8 px-4">
           <h1 className="text-2xl font-bold mb-4">Collection</h1>
-          <p className="text-white mb-4">User ID: {user_id}</p>
+          <p className="text-white mb-4">Hello {user_id}</p>
           {collectionData ? (
             <Collection comics={collectionData}/>
           ) : (
