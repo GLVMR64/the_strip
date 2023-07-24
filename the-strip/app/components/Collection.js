@@ -3,16 +3,17 @@ import UserContext from '../components/utils/UserContext';
 import ReactLoading from 'react-loading';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { useHistory } from 'react-router-dom'; // Import useHistory hook
+import { useRouter } from 'next/router'; // Import useRouter hook
 
 const Collection = () => {
+  
   const { user } = useContext(UserContext);
   const [collection, setCollection] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedComicId, setExpandedComicId] = useState(null);
   const [newName, setNewName] = useState('');
 
-  const history = useHistory(); // Move the useHistory hook to the top
+  const router = useRouter(); // Use useRouter hook for Next.js
   const fetchCollection = async () => {
     try {
       const response = await fetch(`http://127.0.0.1:5555/collection/${user.id}`);
@@ -41,6 +42,7 @@ const Collection = () => {
       
       if (response.ok) {
         toast.success('Account updated successfully.');
+        
       } else {
         throw new Error('Failed to update user name');
       }
@@ -56,9 +58,9 @@ const Collection = () => {
       });
 
       if (response.ok) {
-        
-        history.push('/register'); // Navigate to the register page
         toast.success('Account deleted successfully.');
+        // Redirect to the register page after successful deletion
+        router.push('/register');
       } else {
         throw new Error('Failed to delete account');
       }
@@ -66,9 +68,7 @@ const Collection = () => {
       console.error('Error deleting account:', error);
     }
   };
-  useEffect(() => {
-    fetchCollection();
-  }, [user.id]); // Fetch collection whenever userId changes
+
 
   const toggleComicExpansion = (comicId) => {
     setExpandedComicId((prevExpandedComicId) => (prevExpandedComicId === comicId ? null : comicId));

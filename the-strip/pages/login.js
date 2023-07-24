@@ -4,6 +4,7 @@ import * as Yup from "yup";
 import UserContext from "../app/components/utils/UserContext";
 import { useRouter } from "next/router";
 import Navbar from "@/components/Navbar";
+import Link from "next/link"; // Import Link from next
 
 export default function Login() {
   const router = useRouter();
@@ -51,10 +52,10 @@ export default function Login() {
   };
 
   return (
-    <div>
+    <div className="min-h-screen bg-gradient-to-r from-red-500 to-purple-900">
       <Navbar />
-      <div className="flex justify-center items-center min-h-screen bg-gray-100">
-        <div className="bg-white p-8 rounded shadow-md w-96">
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="bg-white p-8 rounded shadow-md w-96 bg-gradient-to-r from-red-300 to-pink-500">
           <h1 className="text-3xl font-bold mb-6 text-center">Login</h1>
           <Formik
             initialValues={initialValues}
@@ -106,19 +107,18 @@ export default function Login() {
               >
                 Login
               </button>
-
-              {!user && (
-                <p className="mt-4 text-center">
-                  Not registered yet?{" "}
-                  <button
-                    type="button"
-                    className="text-blue-500 underline"
-                    onClick={handleRegister}
-                  >
-                    Register here
-                  </button>
-                </p>
-              )}
+              
+              {/* Always show the "Register here" link */}
+              <p className="mt-4 text-center">
+                Not registered yet?{" "}
+                <button
+                  type="button"
+                  className="text-blue-500 underline"
+                  onClick={handleRegister}
+                >
+                  Register here
+                </button>
+              </p>
             </Form>
           </Formik>
         </div>
