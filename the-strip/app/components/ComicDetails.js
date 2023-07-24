@@ -6,6 +6,7 @@ export default function ComicDetails({ comic, onClose }) {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
+  
 
   const handleAddToCollection = () => {
     const addToCollectionURL = 'http://127.0.0.1:5555/collection';

@@ -23,7 +23,7 @@ export default function Navbar() {
     <nav
       className="py-6 sticky top-0 z-10 bg-gray-900"
       style={{
-        backgroundImage: "url(/marvel.jpg)", // Make sure the path is correct based on your public folder structure
+        backgroundImage: "url(/marvel.jpg)",
         backgroundSize: "cover",
         backgroundRepeat: "no-repeat",
         backgroundPosition: "center",

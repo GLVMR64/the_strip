@@ -112,8 +112,11 @@ def login():
     data = request.get_json()
 
     # Extract user information from the request data
-    email = data['email']
-    password = data['password']
+    email = data.get('email')
+    password = data.get('password')
+
+    if not email or not password:
+        return jsonify({'message': 'Email and password are required'}), 400
 
     # Validate the input data using the validation schema or any other validation method
 
@@ -150,14 +153,15 @@ def login():
     return response, 200
 
 
+
 @app.route('/collection/<int:user_id>', methods=['GET', 'POST'])
 def collection(user_id):  # Add the user_id as an argument
     if request.method == 'GET':
         # You don't need to use request.args.get('user_id') here anymore.
 
-        user_comics = db.session.query(Comic).join(
-            UserComic).filter(UserComic.user_id == user_id).all()
-        if user_comics:
+        user = User.query.get(user_id)  # Get the user object from the user_id
+        if user:
+            user_comics = user.comics  # Get the comics associated with the user
             serialized_comics = [{
                 'id': comic.id,
                 'title': comic.title,
@@ -166,14 +170,13 @@ def collection(user_id):  # Add the user_id as an argument
             } for comic in user_comics]
             return jsonify(serialized_comics), 200
         else:
-            return jsonify({'message': 'No comics found for the user'}), 404
+            return jsonify({'message': 'User not found'}), 404
 
     if request.method == 'POST':
         data = request.get_json()
-        id = data.get('id')
         comic_id = data.get('comicId')
 
-        user = User.query.filter_by(id=id).first()
+        user = User.query.get(user_id)
         comic = Comic.query.get(comic_id)
 
         if not user:
@@ -196,6 +199,7 @@ def collection(user_id):  # Add the user_id as an argument
             'message': 'Comic added to collection',
             'collection': f'{collection}'
         }), 201
+
 
 
 @app.route('/collection/<int:user_id>/<int:comic_id>', methods=['DELETE'])
@@ -272,6 +276,22 @@ def edit_user_name(user_id):
     db.session.commit()
 
     return jsonify({'message': 'User name updated successfully', 'name': new_name}), 200
+
+
+@app.route('/user/<int:user_id>', methods=['DELETE'])
+def delete_user(user_id):
+    # Check if the user exists in the database
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'message': 'User not found'}), 404
+
+    # Delete the user from the database
+    db.session.delete(user)
+    db.session.commit()
+
+    return jsonify({'message': 'User deleted successfully'}), 200    
+
+    
 
 
 if __name__ == "__main__":
