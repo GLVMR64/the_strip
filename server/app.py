@@ -278,6 +278,7 @@ def edit_user_name(user_id):
     return jsonify({'message': 'User name updated successfully', 'name': new_name}), 200
 
 
+
 @app.route('/user/<int:user_id>', methods=['DELETE'])
 def delete_user(user_id):
     # Check if the user exists in the database
