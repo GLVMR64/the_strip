@@ -1,38 +1,45 @@
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
-import Navbar from '../app/components/Navbar';
-import axios from 'axios';
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/router";
+import Navbar from "../app/components/Navbar";
 
 export default function ComicDetails() {
-    const router = useRouter();
-    const { comic_id } = router.query;
-    const [comic, setComic] = useState(null);
-  
-    useEffect(() => {
-      const fetchComicDetails = async () => {
-        try {
-          const response = await axios.get(`http://localhost:5555/comics/${comic_id}`);
-          setComic(response.data);
-        } catch (error) {
-          console.error('Error fetching comic details:', error);
+  const router = useRouter();
+  const { comic_id } = router.query;
+  const [comic, setComic] = useState(null);
+
+  useEffect(() => {
+    const fetchComicDetails = async () => {
+      try {
+        const response = await fetch(`http://localhost:5555/comics/${comic_id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setComic(data);
+        } else {
+          console.error("Error fetching comic details:", response);
         }
-      };
-  
-      if (comic_id) {
-        fetchComicDetails();
+      } catch (error) {
+        console.error("Error fetching comic details:", error);
       }
-    }, [comic_id]);
-  
-    if (!comic) {
-      return <p>Loading comic details...</p>;
+    };
+
+    if (comic_id) {
+      fetchComicDetails();
     }
-  
-    return (
-      <div>
-        <h1>{comic.title}</h1>
-        <img src={comic.image_url} alt={comic.title} />
-        <p>{comic.description}</p>
-        {/* Add the button to add/remove the comic from the collection */}
-      </div>
-    );
+  }, [comic_id]);
+
+  if (!comic) {
+    return <p>Loading comic details...</p>;
   }
+
+  return (
+    <>
+      <Navbar />
+      <div className="flex flex-col items-center mt-4">
+        <h1 className="text-2xl font-bold">{comic.title}</h1>
+        <img src={comic.image} alt={comic.title} className="mt-4 rounded-lg shadow-md" />
+        <p className="mt-4">{comic.description}</p>
+        {/* Add other components to display the detailed comic information */}
+      </div>
+    </>
+  );
+}

@@ -52,6 +52,12 @@ class Review(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     comic_id = db.Column(db.Integer, db.ForeignKey('comics.id'), nullable=False)
 
+class Rating(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    comic_id = db.Column(db.Integer, db.ForeignKey('comic.id'), nullable=False)
+    value = db.Column(db.Integer, nullable=False)
+
 class UserComic(db.Model):
     __tablename__ = 'user_comics'
 

@@ -6,7 +6,7 @@ from flask_migrate import Migrate
 from datetime import datetime, timedelta
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash
-from models import db, User, Comic, UserComic
+from models import db, User, Comic, UserComic, Rating
 import hashlib
 import secrets
 import time
@@ -38,13 +38,41 @@ def hello():
 class Comics(Resource):
     def get(self):
         comics = Comic.query.all()
-        serialized_comics = [{
-            'id': comic.id,
-            'title': comic.title,
-            'description': comic.description,
-            'image': comic.image_url
-        } for comic in comics]
+        serialized_comics = []
+        for comic in comics:
+            # Calculate the average rating and the number of ratings for each comic
+            total_rating = sum(rating.value for rating in comic.ratings)
+            num_ratings = len(comic.ratings)
+            average_rating = total_rating / num_ratings if num_ratings > 0 else 0
+
+            serialized_comic = {
+                'id': comic.id,
+                'title': comic.title,
+                'description': comic.description,
+                'image': comic.image_url,
+                'average_rating': average_rating,
+                'num_ratings': num_ratings
+            }
+            serialized_comics.append(serialized_comic)
+
         return serialized_comics, 200
+
+
+@app.route('/comics/${comic_id}', methods=['GET'])
+def get_comic(comic_id):
+    comic = Comic.query.get(comic_id)
+    if not comic:
+        return jsonify({'message': 'Comic not found'}), 404
+
+    serialized_comic = {
+        'id': comic.id,
+        'title': comic.title,
+        'description': comic.description,
+        'image': comic.image_url,
+        # Add other fields as needed for comic details
+    }
+
+    return jsonify(serialized_comic), 200
 
 
 api.add_resource(Comics, '/comics')
@@ -104,8 +132,10 @@ class Registration(Resource):
         response.headers['Location'] = '/'
         return response, 201
 
+
 # Use a different route for the Registration resource
 api.add_resource(Registration, '/register')  # Change the route to '/register'
+
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -153,7 +183,6 @@ def login():
     return response, 200
 
 
-
 @app.route('/collection/<int:user_id>', methods=['GET', 'POST'])
 def collection(user_id):  # Add the user_id as an argument
     if request.method == 'GET':
@@ -199,7 +228,6 @@ def collection(user_id):  # Add the user_id as an argument
             'message': 'Comic added to collection',
             'collection': f'{collection}'
         }), 201
-
 
 
 @app.route('/collection/<int:user_id>/<int:comic_id>', methods=['DELETE'])
@@ -278,7 +306,6 @@ def edit_user_name(user_id):
     return jsonify({'message': 'User name updated successfully', 'name': new_name}), 200
 
 
-
 @app.route('/collection/<int:user_id>', methods=['DELETE'])
 def delete_user(user_id):
     # Check if the user exists in the database
@@ -290,9 +317,53 @@ def delete_user(user_id):
     db.session.delete(user)
     db.session.commit()
 
-    return jsonify({'message': 'User deleted successfully'}), 200    
+    return jsonify({'message': 'User deleted successfully'}), 200
 
-    
+
+class Ratings(Resource):
+    def get(self, comic_id):
+        comic = Comic.query.get(comic_id)
+        if not comic:
+            return {'message': 'Comic not found'}, 404
+
+        serialized_ratings = [{
+            'user_id': rating.user_id,
+            'value': rating.value
+        } for rating in comic.ratings]
+
+        return serialized_ratings, 200
+
+    def post(self, comic_id):
+        data = request.get_json()
+        user_id = data.get('user_id')
+        value = data.get('value')
+
+        if not user_id or not value:
+            return {'message': 'User ID and value are required'}, 400
+
+        # Check if the comic and user exist in the database
+        comic = Comic.query.get(comic_id)
+        user = User.query.get(user_id)
+
+        if not comic or not user:
+            return {'message': 'Comic or User not found'}, 404
+
+        # Check if the user has already rated the comic
+        existing_rating = Rating.query.filter_by(
+            comic_id=comic_id, user_id=user_id).first()
+
+        if existing_rating:
+            return {'message': 'User has already rated this comic'}, 400
+
+        # Create a new rating and add it to the database
+        new_rating = Rating(user_id=user_id, comic_id=comic_id, value=value)
+        db.session.add(new_rating)
+        db.session.commit()
+
+        return {'message': 'Rating added successfully'}, 201
+
+
+api.add_resource(Ratings, '/comics/<int:comic_id>/ratings')
 
 
 if __name__ == "__main__":
