@@ -6,7 +6,7 @@ from flask_migrate import Migrate
 from datetime import datetime, timedelta
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash
-from models import db, User, Comic, UserComic, Rating
+from models import db, User, Comic, UserComic
 import hashlib
 import secrets
 import time
@@ -319,51 +319,6 @@ def delete_user(user_id):
 
     return jsonify({'message': 'User deleted successfully'}), 200
 
-
-class Ratings(Resource):
-    def get(self, comic_id):
-        comic = Comic.query.get(comic_id)
-        if not comic:
-            return {'message': 'Comic not found'}, 404
-
-        serialized_ratings = [{
-            'user_id': rating.user_id,
-            'value': rating.value
-        } for rating in comic.ratings]
-
-        return serialized_ratings, 200
-
-    def post(self, comic_id):
-        data = request.get_json()
-        user_id = data.get('user_id')
-        value = data.get('value')
-
-        if not user_id or not value:
-            return {'message': 'User ID and value are required'}, 400
-
-        # Check if the comic and user exist in the database
-        comic = Comic.query.get(comic_id)
-        user = User.query.get(user_id)
-
-        if not comic or not user:
-            return {'message': 'Comic or User not found'}, 404
-
-        # Check if the user has already rated the comic
-        existing_rating = Rating.query.filter_by(
-            comic_id=comic_id, user_id=user_id).first()
-
-        if existing_rating:
-            return {'message': 'User has already rated this comic'}, 400
-
-        # Create a new rating and add it to the database
-        new_rating = Rating(user_id=user_id, comic_id=comic_id, value=value)
-        db.session.add(new_rating)
-        db.session.commit()
-
-        return {'message': 'Rating added successfully'}, 201
-
-
-api.add_resource(Ratings, '/comics/<int:comic_id>/ratings')
 
 
 if __name__ == "__main__":
