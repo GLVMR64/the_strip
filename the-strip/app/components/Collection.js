@@ -3,7 +3,7 @@ import UserContext from "../components/utils/UserContext";
 import ReactLoading from "react-loading";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useRouter } from "next/router"; // Import useRouter hook
+import { useRouter } from "next/router";
 
 const Collection = () => {
   const buttonStyles = "rounded px-4 py-2 text-white font-semibold";
@@ -12,9 +12,12 @@ const Collection = () => {
   const [loading, setLoading] = useState(true);
   const [expandedComicId, setExpandedComicId] = useState(null);
   const [newName, setNewName] = useState("");
-  const [showEditForm, setShowEditForm] = useState(false); // Add state for controlling edit form visibility
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [reviewText, setReviewText] = useState("");
+  const [selectedRating, setSelectedRating] = useState(0);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const router = useRouter();
 
-  const router = useRouter(); // Use useRouter hook for Next.js
   const fetchCollection = async () => {
     try {
       const response = await fetch(`http://127.0.0.1:5555/collection/${user.id}`);
@@ -36,7 +39,7 @@ const Collection = () => {
   }, []);
 
   const handleEditName = async (event) => {
-    event.preventDefault(); // Prevent the default form submission behavior
+    event.preventDefault();
 
     try {
       const response = await fetch(`http://127.0.0.1:5555/user/${user.id}/edit-name`, {
@@ -49,7 +52,7 @@ const Collection = () => {
 
       if (response.ok) {
         toast.success("Account updated successfully.");
-        setShowEditForm(false); // Hide the edit form after successful update
+        setShowEditForm(false);
       } else {
         throw new Error("Failed to update user name");
       }
@@ -65,7 +68,6 @@ const Collection = () => {
       });
 
       if (response.ok) {
-        // Redirect to the register page after successful deletion
         router.push("/register");
         toast.success("Account deleted successfully.");
       } else {
@@ -76,6 +78,12 @@ const Collection = () => {
     }
   };
 
+  const toggleComicExpansion = (comicId) => {
+    setExpandedComicId((prevExpandedComicId) =>
+      prevExpandedComicId === comicId ? null : comicId
+    );
+  };
+
   const removeFromCollection = async (comicId) => {
     try {
       const response = await fetch(`http://127.0.0.1:5555/collection/${user.id}/${comicId}`, {
@@ -83,7 +91,6 @@ const Collection = () => {
       });
 
       if (response.ok) {
-        // Remove the comic from the collection state
         setCollection((prevCollection) => prevCollection.filter((comic) => comic.id !== comicId));
         toast.success("Comic removed from collection successfully.");
       } else {
@@ -94,10 +101,27 @@ const Collection = () => {
     }
   };
 
-  const toggleComicExpansion = (comicId) => {
-    setExpandedComicId((prevExpandedComicId) =>
-      prevExpandedComicId === comicId ? null : comicId
-    );
+  const handleAddReview = async (comicId) => {
+    try {
+      const response = await fetch(`http://127.0.0.1:5555/comics/${comicId}/add-review`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ review: reviewText, rating: selectedRating }),
+      });
+
+      if (response.ok) {
+        toast.success("Review added successfully.");
+        setShowReviewForm(false);
+        setReviewText("");
+        setSelectedRating(0);
+      } else {
+        throw new Error("Failed to add review");
+      }
+    } catch (error) {
+      console.error("Error adding review:", error);
+    }
   };
 
   return (
@@ -118,7 +142,6 @@ const Collection = () => {
           </button>
         </div>
 
-        {/* Name Edit Form */}
         {showEditForm && (
           <form onSubmit={handleEditName} className="mb-4">
             <div className="flex items-center mb-4">
@@ -143,7 +166,6 @@ const Collection = () => {
         )}
 
         <div className="flex flex-wrap justify-center min-h-screen bg-gradient-to-r from-red-500 to-purple-900 p-4">
-          {/* Display the user's name */}
           <p className="text-white mb-4">Hey {user.name}</p>
 
           {loading ? (
@@ -174,6 +196,48 @@ const Collection = () => {
                       onClick={() => removeFromCollection(comic.id)}
                     >
                       Remove from Collection
+                    </button>
+                  </div>
+                )}
+
+                {expandedComicId === comic.id && !showReviewForm && (
+                  <button
+                    className="bg-blue-500 text-white px-4 py-2 rounded mt-4"
+                    onClick={() => setShowReviewForm(true)}
+                  >
+                    Write a Review
+                  </button>
+                )}
+
+                {expandedComicId === comic.id && showReviewForm && (
+                  <div className="mt-4">
+                    <textarea
+                      value={reviewText}
+                      onChange={(e) => setReviewText(e.target.value)}
+                      className="w-full p-2 border border-gray-300 rounded resize-none"
+                      placeholder="Write your review here"
+                    />
+                    <div className="mt-2">
+                      <p className="text-sm mb-1">Rating:</p>
+                      <div className="flex items-center">
+                        {Array.from({ length: 5 }, (_, i) => (
+                          <button
+                            key={i}
+                            onClick={() => setSelectedRating(i + 1)}
+                            className={`text-xl ${
+                              i < selectedRating ? "text-yellow-400" : "text-gray-400"
+                            } focus:outline-none`}
+                          >
+                            ★
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <button
+                      className="bg-blue-500 text-white px-4 py-2 rounded mt-4"
+                      onClick={() => handleAddReview(comic.id)}
+                    >
+                      Submit Review
                     </button>
                   </div>
                 )}

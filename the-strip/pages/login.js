@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import UserContext from "../app/components/utils/UserContext";
@@ -18,30 +18,31 @@ export default function Login() {
 
   // Form validation schema
   const validationSchema = Yup.object({
-    email: Yup.string()
-      .email("Invalid email address")
-      .required("Email is required"),
+    email: Yup.string().email("Invalid email address").required("Email is required"),
     password: Yup.string().required("Password is required"),
   });
 
   const onSubmit = async (values, { setErrors }) => {
     try {
       // Handle login logic here (e.g., send API request)
-      await fetch("http://127.0.0.1:5555/login", {
+      const response = await fetch("http://127.0.0.1:5555/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(values),
-      })
-        .then((r) => r.json())
-        .then((data) => {
-          // Call logIn with the ID value
-          logIn(data.id);
-          console.log(data);
-          // Redirect to the root URL after successful login
-          router.push("/");
-        });
+      });
+
+      if (!response.ok) {
+        throw new Error("Login failed");
+      }
+
+      const data = await response.json();
+      // Call logIn with the ID value
+      logIn(data.id);
+      console.log(data);
+      // Redirect to the root URL after successful login
+      router.push("/");
     } catch (error) {
       console.error("Login failed:", error);
     }
@@ -50,6 +51,41 @@ export default function Login() {
   const handleRegister = () => {
     router.push("/register");
   };
+
+  // Check if the user is already logged in on initial load
+  useEffect(() => {
+    // Get the user token from localStorage
+    const userToken = localStorage.getItem("userToken");
+    if (userToken) {
+      // Assuming you have an API route to verify the user token and get user details
+      fetch("http://127.0.0.1:5555/verify-token", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${userToken}`,
+        },
+      })
+        .then((response) => {
+          if (response.ok) {
+            return response.json();
+          } else {
+            throw new Error("Invalid token");
+          }
+        })
+        .then((data) => {
+          // Call logIn with the ID value
+          logIn(data.id);
+          console.log(data);
+          // Redirect to the root URL after successful login
+          router.push("/");
+        })
+        .catch((error) => {
+          console.error("Error verifying token:", error);
+          // If there's an error verifying the token, remove it from localStorage
+          localStorage.removeItem("userToken");
+        });
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-red-500 to-purple-900">

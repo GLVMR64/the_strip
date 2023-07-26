@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import UserContext from "./UserContext";
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [loggedIn, setLoggedIn] = useState(false); // New loggedIn state
 
   const updateUserContext = (newUser) => {
     setUser((prevUser) => ({
@@ -12,36 +13,25 @@ export const UserProvider = ({ children }) => {
   };
 
   const logIn = (id) => {
-    updateUserContext({ loggedIn: false, id: id });
+    updateUserContext({ loggedIn: true, id: id }); // Update loggedIn to true on login
+    localStorage.setItem("userToken", id); // Store the user token in Local Storage
   };
 
   const logOut = () => {
-    updateUserContext({ loggedIn: false, id: null });
+    updateUserContext({ loggedIn: false, id: null }); // Update loggedIn to false on logout
+    localStorage.removeItem("userToken"); // Remove the user token from Local Storage
   };
 
-  const updateUserName = async (name) => {
-    try {
-      const response = await fetch(`http://127.0.0.1:5555/collection/${user.id}/`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ name }),
-      });
-      const data = await response.json();
-      // Update the user's name in the local state after successful update
-      setUser((prevUser) => ({
-        ...prevUser,
-        name: data.name,
-      }));
-    } catch (error) {
-      console.error("Failed to update name:", error);
-      throw error;
+  // Check if the user is already logged in on initial load
+  useEffect(() => {
+    const userToken = localStorage.getItem("userToken");
+    if (userToken) {
+      logIn(userToken); // Automatically log in the user if a valid token is found
     }
-  };
+  }, []);
 
   return (
-    <UserContext.Provider value={{ user, logIn, logOut, updateUserName }}>
+    <UserContext.Provider value={{ user, loggedIn, logIn, logOut }}>
       {children}
     </UserContext.Provider>
   );
