@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import Cookies from 'js-cookie';
 import Navbar from '@/components/Navbar';
 import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const ComicDetails = () => {
   const router = useRouter();
@@ -33,14 +34,13 @@ const ComicDetails = () => {
     }
   }, [comic_id]);
 
-
   const handleAddToCollection = async () => {
     if (!userId) {
       console.error('User ID is not available.');
       return;
     }
 
-    const addToCollectionURL = `http://127.0.0.1:5555/collection/${userId}`;
+    const addToCollectionURL = `/collection/${userId}`;
     const comicData = { comic_id: comic_id };
 
     try {
@@ -50,47 +50,90 @@ const ComicDetails = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(comicData),
-        credentials: 'include', // Include credentials for sending cookies
+        credentials: 'include',
       });
 
       if (response.ok) {
         const data = await response.json();
-        console.log(data.message);
-        // Handle success (e.g., show a success message to the user)
+        if (data.message === 'Comic already in collection') {
+          toast.warning('Comic is already in collection!', {
+            position: 'top-right',
+            autoClose: 3000,
+            hideProgressBar: true,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+          });
+        } else {
+          toast.success('Comic added to collection!', {
+            position: 'top-right',
+            autoClose: 3000,
+            hideProgressBar: true,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+          });
+        }
       } else {
+        // Handle non-200 response status (error)
         console.error('Error adding comic to collection:', response);
-        // Handle error (e.g., show an error message to the user)
+        toast.error('Comic already in collection!', {
+          position: 'top-right',
+          autoClose: 3000,
+          hideProgressBar: true,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
       }
     } catch (error) {
       console.error('Error adding comic to collection:', error);
-      // Handle error (e.g., show an error message to the user)
+      toast.error('Error adding comic to collection', {
+        position: 'top-right',
+        autoClose: 3000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-red-500 to-purple-900">
-      <Navbar/>
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-500 p-8 rounded-lg shadow-md w-96">
+    <>
+      <Navbar />
+      <div className="min-h-screen bg-gradient-to-r from-red-500 to-purple-900 p-4">
+        <div className="max-w-md mx-auto bg-gradient-to-r from-indigo-700 to-indigo-800 p-8 rounded-lg shadow-lg">
           {loading ? (
-            <p className="text-white text-center">Loading...</p>
+            <p className="text-center text-white">Loading...</p>
           ) : (
             <>
-              <h1 className="text-2xl font-bold text-white mb-4">{comic.title}</h1>
+              <h2 className="text-2xl font-bold mb-4 text-white">{comic.title}</h2>
+              <p className="text-gray-500 mb-2 text-white">Release Year: {comic.release_year}</p>
+              <p className="text-white mb-4">{comic.description}</p>
               <img src={comic.image} alt={comic.title} className="w-full h-40 object-cover rounded-lg mb-4" />
-              <p className="text-gray-300 mb-4">Release Date: {comic.release_date}</p>
-              <p className="text-gray-300 mb-4">{comic.comic_description}</p>
-              <button
-                onClick={handleAddToCollection}
-                className="block w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-              >
-                Add to Collection
-              </button>
+              <div className="flex justify-between mt-4">
+                <button
+                  type="button"
+                  className="bg-blue-500 text-white px-4 py-2 rounded"
+                  onClick={() => router.push('/comics')}
+                >
+                  Go back to Comics
+                </button>
+                <button
+                  type="button"
+                  className="bg-blue-500 text-white px-4 py-2 rounded"
+                  onClick={handleAddToCollection}
+                >
+                  Add to Collection
+                </button>
+              </div>
             </>
           )}
         </div>
       </div>
-    </div>
+      <ToastContainer />
+    </>
   );
 };
 

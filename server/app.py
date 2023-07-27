@@ -5,7 +5,7 @@ from flask_migrate import Migrate
 from datetime import datetime, timedelta
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash
-from models import db, User, Comic, UserComic
+from models import db, User, Comic, UserComic,Review
 import hashlib
 import secrets
 import os
@@ -168,17 +168,38 @@ def login():
 
     return response, 200
 
+@app.route('/comics/<int:comic_id>/add-review', methods=['POST'])
+def add_review(comic_id):
+    data = request.get_json()
+    user_id = request.user_id  
 
+    if not user_id:
+        return jsonify({"error": "User not authenticated."}), 401
+
+    if 'review' in data:
+        review_text = data['review']
+
+        # Check if the comic exists in comics_data
+        comic = Comic.query.get(comic_id)
+        if not comic:
+            return jsonify({"error": "Comic not found."}), 404
+
+        # Add the review to the database
+        review = Review(user_id=user_id, comic_id=comic_id, review_text=review_text)
+        db.session.add(review)
+        db.session.commit()
+
+        return jsonify({"message": "Review added successfully."}), 200
+    else:
+        return jsonify({"error": "Review data is missing."}), 400
 
 
 @app.route('/collection/<int:user_id>', methods=['GET', 'POST'])
-def collection(user_id):  # Add the user_id as an argument
+def collection(user_id):
     if request.method == 'GET':
-        # You don't need to use request.args.get('user_id') here anymore.
-
-        user = User.query.get(user_id)  # Get the user object from the user_id
+        user = User.query.get(user_id)
         if user:
-            user_comics = user.comics  # Get the comics associated with the user
+            user_comics = user.comics
             serialized_comics = [{
                 'id': comic.id,
                 'title': comic.title,
@@ -191,7 +212,7 @@ def collection(user_id):  # Add the user_id as an argument
 
     if request.method == 'POST':
         data = request.get_json()
-        comic_id = data.get('comic_id')
+        comic_id = data.get('comic_id')  # Update the key to 'comic_id'
 
         user = User.query.get(user_id)
         comic = Comic.query.get(comic_id)
@@ -205,12 +226,13 @@ def collection(user_id):  # Add the user_id as an argument
         if comic in user.comics:
             return jsonify({
                 'message': 'Comic already in collection',
-            }), 400
+            }), 400  # Return 400 (Bad Request) with custom message
 
         user.comics.append(comic)
         db.session.commit()
 
         return jsonify({'message': 'Comic added to collection'}), 201
+
 
 
 @app.route('/collection/<int:user_id>/<int:comic_id>', methods=['DELETE'])
@@ -285,6 +307,7 @@ def delete_user(user_id):
     db.session.commit()
 
     return jsonify({'message': 'User deleted successfully'}), 200
+    
 
 
 if __name__ == '__main__':

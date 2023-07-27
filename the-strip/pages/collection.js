@@ -13,7 +13,7 @@ export default function Collection() {
     // Fetch the user's collection data based on the ID
     const fetchCollectionData = async () => {
       try {
-        const response = await fetch(`/collection/${id}`); // Replace with your API endpoint to fetch the collection data
+        const response = await fetch(`http://127.0.0.1:5555/collection/${id}`); 
         if (response.ok) {
           const data = await response.json();
           setCollectionData(data);
@@ -54,7 +54,7 @@ export default function Collection() {
   // Function to remove the comic from the user's collection
   const removeFromCollection = async (comicId) => {
     try {
-      const response = await fetch(`/collection/${comicId}`, {
+      const response = await fetch(`http://127.0.0.1:5555/collection/${comicId}`, {
         method: 'DELETE',
       });
       if (response.ok) {
@@ -84,12 +84,20 @@ export default function Collection() {
                   </div>
                   <div className="p-4">
                     {userCollection.includes(comic.id) ? (
-                      <button
-                        onClick={() => removeFromCollection(comic.id)}
-                        className="bg-red-500 text-white px-4 py-2 rounded"
-                      >
-                        Remove from Collection
-                      </button>
+                      <>
+                        <button
+                          onClick={() => removeFromCollection(comic.id)}
+                          className="bg-red-500 text-white px-4 py-2 rounded mr-2"
+                        >
+                          Remove from Collection
+                        </button>
+                        <button
+                          // Add any other functionality you want for the comic
+                          className="bg-blue-500 text-white px-4 py-2 rounded"
+                        >
+                          View Details
+                        </button>
+                      </>
                     ) : (
                       <button
                         onClick={() => addToCollection(comic.id)}

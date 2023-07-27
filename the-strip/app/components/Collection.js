@@ -10,7 +10,6 @@ const Collection = () => {
   const { user } = useContext(UserContext);
   const [collection, setCollection] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [expandedComicId, setExpandedComicId] = useState(null);
   const [newName, setNewName] = useState("");
   const [showEditForm, setShowEditForm] = useState(false);
   const [reviewText, setReviewText] = useState("");
@@ -78,8 +77,6 @@ const Collection = () => {
     }
   };
 
-  
-
   const removeFromCollection = async (comicId) => {
     try {
       const response = await fetch(`http://127.0.0.1:5555/collection/${user.id}/${comicId}`, {
@@ -97,16 +94,16 @@ const Collection = () => {
     }
   };
 
-  const handleAddReview = async (comicId) => {
+  const handleAddReview = async (comicId, reviewText) => {
     try {
       const response = await fetch(`http://127.0.0.1:5555/comics/${comicId}/add-review`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ review: reviewText, rating: selectedRating }),
+        body: JSON.stringify({ review: reviewText }),
       });
-
+  
       if (response.ok) {
         toast.success("Review added successfully.");
         setShowReviewForm(false);
@@ -119,6 +116,7 @@ const Collection = () => {
       console.error("Error adding review:", error);
     }
   };
+  
 
   return (
     <>
@@ -170,73 +168,63 @@ const Collection = () => {
             </div>
           ) : collection.length > 0 ? (
             collection.map((comic) => (
-              <div
-                key={comic.id}
-                className="max-w-sm m-4 cursor-pointer"
-                onClick={() => toggleComicExpansion(comic.id)}
-              >
+              <div key={comic.id} className="max-w-sm m-4 cursor-pointer">
                 <img
                   src={comic.image}
                   alt={comic.title}
-                  className={`w-full h-48 object-cover transition-transform ${
-                    expandedComicId === comic.id ? "transform -translate-y-2" : ""
-                  }`}
+                  className="w-full h-48 object-cover"
                 />
 
-                {expandedComicId === comic.id && (
-                  <div className="p-4">
-                    <h3 className="text-lg font-semibold mb-2">{comic.title}</h3>
-                    <p>{comic.description}</p>
-                    <button
-                      className="bg-red-500 text-white px-4 py-2 rounded mt-4"
-                      onClick={() => removeFromCollection(comic.id)}
-                    >
-                      Remove from Collection
-                    </button>
-                  </div>
-                )}
+                <div className="p-4">
+                  <h3 className="text-lg font-semibold mb-2">{comic.title}</h3>
+                  <p>{comic.description}</p>
+                  <button
+                    className="bg-red-500 text-white px-4 py-2 rounded mt-4"
+                    onClick={() => removeFromCollection(comic.id)}
+                  >
+                    Remove from Collection
+                  </button>
 
-                {expandedComicId === comic.id && !showReviewForm && (
                   <button
                     className="bg-blue-500 text-white px-4 py-2 rounded mt-4"
                     onClick={() => setShowReviewForm(true)}
                   >
                     Write a Review
                   </button>
-                )}
 
-                {expandedComicId === comic.id && showReviewForm && (
-                  <div className="mt-4">
-                    <textarea
-                      value={reviewText}
-                      onChange={(e) => setReviewText(e.target.value)}
-                      className="w-full p-2 border border-gray-300 rounded resize-none"
-                      placeholder="Write your review here"
-                    />
-                    <div className="mt-2">
-                      <p className="text-sm mb-1">Rating:</p>
-                      <div className="flex items-center">
-                        {Array.from({ length: 5 }, (_, i) => (
-                          <button
-                            key={i}
-                            onClick={() => setSelectedRating(i + 1)}
-                            className={`text-xl ${
-                              i < selectedRating ? "text-yellow-400" : "text-gray-400"
-                            } focus:outline-none`}
-                          >
-                            ★
-                          </button>
-                        ))}
+                  {showReviewForm && (
+                    <div className="mt-4">
+                      <textarea
+                        value={reviewText}
+                        onChange={(e) => setReviewText(e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded resize-none"
+                        placeholder="Write your review here"
+                      />
+                      <div className="mt-2">
+                        <p className="text-sm mb-1">Rating:</p>
+                        <div className="flex items-center">
+                          {Array.from({ length: 5 }, (_, i) => (
+                            <button
+                              key={i}
+                              onClick={() => setSelectedRating(i + 1)}
+                              className={`text-xl ${
+                                i < selectedRating ? "text-yellow-400" : "text-gray-400"
+                              } focus:outline-none`}
+                            >
+                              ★
+                            </button>
+                          ))}
+                        </div>
                       </div>
+                      <button
+                        className="bg-blue-500 text-white px-4 py-2 rounded mt-4"
+                        onClick={() => handleAddReview(comic.id)}
+                      >
+                        Submit Review
+                      </button>
                     </div>
-                    <button
-                      className="bg-blue-500 text-white px-4 py-2 rounded mt-4"
-                      onClick={() => handleAddReview(comic.id)}
-                    >
-                      Submit Review
-                    </button>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             ))
           ) : (
