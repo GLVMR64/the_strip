@@ -1,4 +1,5 @@
-import { UserProvider } from "../app/components/utils/UserProvider";
+// pages/_app.js
+import { UserProvider } from "../app/components/utils/UserProvider"; // Update the file path accordingly
 import "../app/globals.css";
 import "../app/tailwind.css";
 

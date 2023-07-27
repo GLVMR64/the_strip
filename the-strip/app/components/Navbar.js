@@ -13,7 +13,7 @@ export default function Navbar() {
     });
     console.log(user);
     await router.push("/login");
-    window.location.reload();
+    
   };
 
   // Check if the user object exists before accessing its 'id' property

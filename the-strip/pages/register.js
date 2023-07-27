@@ -22,11 +22,8 @@ export default function Register() {
     password: Yup.string().required("Password is required"),
   });
 
-  // Form submission
   const onSubmit = async (values, { setErrors }) => {
     try {
-      // Handle register logic here (e.g., send API request)
-      // Example:
       const response = await fetch("http://127.0.0.1:5555/register", {
         method: "POST",
         headers: {
@@ -34,9 +31,9 @@ export default function Register() {
         },
         body: JSON.stringify(values),
       });
-
+  
       if (response.ok) {
-        // Redirect to the home page after successful register
+        // Redirect to the home page after successful registration
         router.push("/");
       } else if (response.status === 400) {
         // Handle validation errors
@@ -50,6 +47,7 @@ export default function Register() {
       console.error("Registration failed:", error);
     }
   };
+  
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-red-500 to-purple-900">

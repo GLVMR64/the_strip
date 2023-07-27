@@ -1,126 +1,97 @@
-import React, { useEffect, useState } from "react";
-import { useRouter } from "next/router";
-import Navbar from "../../app/components/Navbar";
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
+import Cookies from 'js-cookie';
+import Navbar from '@/components/Navbar';
+import { ToastContainer, toast } from 'react-toastify';
 
-export default function ComicDetails() {
+const ComicDetails = () => {
   const router = useRouter();
-  const { comic_id } = router.query;
+  const { comic_id, userId, cookieValue } = router.query;
+
   const [comic, setComic] = useState(null);
-  const [isInCollection, setIsInCollection] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchComicDetails = async () => {
+    const fetchComic = async () => {
       try {
-        const response = await fetch(`http://localhost:5555/comics/${comic_id}`);
+        const response = await fetch(`http://127.0.0.1:5555/comics/${comic_id}`);
         if (response.ok) {
           const data = await response.json();
           setComic(data);
-          checkIfInCollection(data.id); // Check if the comic is in the collection
         } else {
-          console.error("Error fetching comic details:", response);
+          console.error('Error fetching comic:', response);
         }
       } catch (error) {
-        console.error("Error fetching comic details:", error);
+        console.error('Error fetching comic:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
     if (comic_id) {
-      fetchComicDetails();
+      fetchComic();
     }
   }, [comic_id]);
 
-  // Function to check if the comic is in the user's collection
-  const checkIfInCollection = async (comicId) => {
+
+  const handleAddToCollection = async () => {
+    if (!userId) {
+      console.error('User ID is not available.');
+      return;
+    }
+
+    const addToCollectionURL = `http://127.0.0.1:5555/collection/${userId}`;
+    const comicData = { comic_id: comic_id };
+
     try {
-      const response = await fetch(`http://127.0.0.1:5555/collection/${comicId}`);
+      const response = await fetch(addToCollectionURL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(comicData),
+        credentials: 'include', // Include credentials for sending cookies
+      });
+
       if (response.ok) {
         const data = await response.json();
-        setIsInCollection(data.isInCollection);
+        console.log(data.message);
+        // Handle success (e.g., show a success message to the user)
       } else {
-        console.error("Error checking if comic is in collection:", response);
+        console.error('Error adding comic to collection:', response);
+        // Handle error (e.g., show an error message to the user)
       }
     } catch (error) {
-      console.error("Error checking if comic is in collection:", error);
-    }
-  };
-
-  // Function to add the comic to the user's collection
-  const addToCollection = async () => {
-    try {
-      const response = await fetch(`http://127.0.0.1:5555/collection/${comic.id}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ comicId: comic.id }),
-      });
-      if (response.ok) {
-        setIsInCollection(true);
-      } else {
-        console.error("Error adding comic to collection:", response);
-      }
-    } catch (error) {
-      console.error("Error adding comic to collection:", error);
-    }
-  };
-
-  // Function to remove the comic from the user's collection
-  const removeFromCollection = async () => {
-    try {
-      const response = await fetch(`http://127.0.0.1:5555/collection/${comic.id}`, {
-        method: "DELETE",
-      });
-      if (response.ok) {
-        setIsInCollection(false);
-      } else {
-        console.error("Error removing comic from collection:", response);
-      }
-    } catch (error) {
-      console.error("Error removing comic from collection:", error);
-    }
-  };
-
-  if (!comic) {
-    return <p>Loading comic details...</p>;
-  }
-  const toggleInCollection = async () => {
-    if (isInCollection) {
-      removeFromCollection();
-    } else {
-      addToCollection();
+      console.error('Error adding comic to collection:', error);
+      // Handle error (e.g., show an error message to the user)
     }
   };
 
   return (
-    <>
-      <Navbar />
-      <div
-        className="flex justify-center items-center min-h-screen bg-gradient-to-r from-red-500 to-purple-900"
-      >
-        <div className="p-4 bg-white rounded shadow-md max-w-lg">
-          <h1 className="text-2xl font-bold mb-4 text-black">{comic.title}</h1>
-          <div className="flex flex-col items-center">
-            <img
-              src={comic.image}
-              alt={comic.title}
-              className="w-full h-64 object-contain mb-4 rounded-lg shadow-md"
-            />
-            <p className="text-center text-black">{comic.description}</p>
-          </div>
-          {/* Add other components to display the detailed comic information */}
-          <div className="mt-4">
-            {/* Toggle the button text based on isInCollection state */}
-            <button
-              onClick={toggleInCollection}
-              className={`${
-                isInCollection ? "bg-red-500" : "bg-green-500"
-              } text-black px-4 py-2 rounded mr-2`}
-            >
-              {isInCollection ? "Remove from Collection" : "Add to Collection"}
-            </button>
-          </div>
+    <div className="min-h-screen bg-gradient-to-r from-red-500 to-purple-900">
+      <Navbar/>
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-500 p-8 rounded-lg shadow-md w-96">
+          {loading ? (
+            <p className="text-white text-center">Loading...</p>
+          ) : (
+            <>
+              <h1 className="text-2xl font-bold text-white mb-4">{comic.title}</h1>
+              <img src={comic.image} alt={comic.title} className="w-full h-40 object-cover rounded-lg mb-4" />
+              <p className="text-gray-300 mb-4">Release Date: {comic.release_date}</p>
+              <p className="text-gray-300 mb-4">{comic.comic_description}</p>
+              <button
+                onClick={handleAddToCollection}
+                className="block w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+              >
+                Add to Collection
+              </button>
+            </>
+          )}
         </div>
       </div>
-    </>
+    </div>
   );
-}
+};
+
+export default ComicDetails;

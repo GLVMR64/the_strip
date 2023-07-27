@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import UserContext from "./UserContext";
+import { UserContext } from './UserContext'; // Update the file path accordingly
+
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
