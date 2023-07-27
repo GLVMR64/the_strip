@@ -11,7 +11,7 @@ export default function ComicDetails() {
   useEffect(() => {
     const fetchComicDetails = async () => {
       try {
-        const response = await fetch(`http://127.0.0.1:5555/comics/${comic_id}`);
+        const response = await fetch(`http://localhost:5555/comics/${comic_id}`);
         if (response.ok) {
           const data = await response.json();
           setComic(data);
@@ -83,6 +83,13 @@ export default function ComicDetails() {
   if (!comic) {
     return <p>Loading comic details...</p>;
   }
+  const toggleInCollection = async () => {
+    if (isInCollection) {
+      removeFromCollection();
+    } else {
+      addToCollection();
+    }
+  };
 
   return (
     <>
@@ -91,36 +98,26 @@ export default function ComicDetails() {
         className="flex justify-center items-center min-h-screen bg-gradient-to-r from-red-500 to-purple-900"
       >
         <div className="p-4 bg-white rounded shadow-md max-w-lg">
-          <h1 className="text-2xl font-bold mb-4">{comic.title}</h1>
-          <img
-            src={comic.image}
-            alt={comic.title}
-            className="w-full h-64 object-contain mb-4 rounded-lg shadow-md"
-          />
-          <p>{comic.description}</p>
+          <h1 className="text-2xl font-bold mb-4 text-black">{comic.title}</h1>
+          <div className="flex flex-col items-center">
+            <img
+              src={comic.image}
+              alt={comic.title}
+              className="w-full h-64 object-contain mb-4 rounded-lg shadow-md"
+            />
+            <p className="text-center text-black">{comic.description}</p>
+          </div>
           {/* Add other components to display the detailed comic information */}
           <div className="mt-4">
-            <h2 className="text-lg font-semibold">Additional Information</h2>
-            <p>Comic ID: {comic.id}</p>
-            {/* Add other comic details */}
-          </div>
-          {/* Add buttons for adding and removing from the collection */}
-          <div className="mt-4">
-            {isInCollection ? (
-              <button
-                onClick={removeFromCollection}
-                className="bg-red-500 text-white px-4 py-2 rounded mr-2"
-              >
-                Remove from Collection
-              </button>
-            ) : (
-              <button
-                onClick={addToCollection}
-                className="bg-green-500 text-white px-4 py-2 rounded mr-2"
-              >
-                Add to Collection
-              </button>
-            )}
+            {/* Toggle the button text based on isInCollection state */}
+            <button
+              onClick={toggleInCollection}
+              className={`${
+                isInCollection ? "bg-red-500" : "bg-green-500"
+              } text-black px-4 py-2 rounded mr-2`}
+            >
+              {isInCollection ? "Remove from Collection" : "Add to Collection"}
+            </button>
           </div>
         </div>
       </div>

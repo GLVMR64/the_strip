@@ -7,6 +7,7 @@ export default function Collection() {
   const { id } = router.query;
 
   const [collectionData, setCollectionData] = useState(null);
+  const [userCollection, setUserCollection] = useState([]);
 
   useEffect(() => {
     // Fetch the user's collection data based on the ID
@@ -16,6 +17,7 @@ export default function Collection() {
         if (response.ok) {
           const data = await response.json();
           setCollectionData(data);
+          setUserCollection(data.map((comic) => comic.id)); // Extract the comic IDs in the user's collection
         } else {
           console.error('Failed to fetch collection data:', response.status);
         }
@@ -29,6 +31,42 @@ export default function Collection() {
     }
   }, [id]);
 
+  // Function to add the comic to the user's collection
+  const addToCollection = async (comicId) => {
+    try {
+      const response = await fetch(`/collection/${comicId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ comicId }),
+      });
+      if (response.ok) {
+        setUserCollection([...userCollection, comicId]); // Update the userCollection state with the new comicId
+      } else {
+        console.error('Error adding comic to collection:', response);
+      }
+    } catch (error) {
+      console.error('Error adding comic to collection:', error);
+    }
+  };
+
+  // Function to remove the comic from the user's collection
+  const removeFromCollection = async (comicId) => {
+    try {
+      const response = await fetch(`/collection/${comicId}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        setUserCollection(userCollection.filter((id) => id !== comicId)); // Remove the comicId from the userCollection state
+      } else {
+        console.error('Error removing comic from collection:', response);
+      }
+    } catch (error) {
+      console.error('Error removing comic from collection:', error);
+    }
+  };
+
   return (
     <>
       <Navbar />
@@ -39,13 +77,27 @@ export default function Collection() {
           {collectionData ? (
             <ul className="grid grid-cols-1 gap-6">
               {collectionData.map((comic) => (
-                <li
-                  key={comic.id}
-                  className="bg-white rounded-lg shadow-lg overflow-hidden"
-                >
+                <li key={comic.id} className="bg-white rounded-lg shadow-lg overflow-hidden">
                   <div className="p-4">
                     <h2 className="text-xl font-semibold mb-2">{comic.title}</h2>
                     <p className="text-gray-500">{comic.description}</p>
+                  </div>
+                  <div className="p-4">
+                    {userCollection.includes(comic.id) ? (
+                      <button
+                        onClick={() => removeFromCollection(comic.id)}
+                        className="bg-red-500 text-white px-4 py-2 rounded"
+                      >
+                        Remove from Collection
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => addToCollection(comic.id)}
+                        className="bg-green-500 text-white px-4 py-2 rounded"
+                      >
+                        Add to Collection
+                      </button>
+                    )}
                   </div>
                 </li>
               ))}

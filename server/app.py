@@ -188,7 +188,7 @@ def collection(user_id):  # Add the user_id as an argument
             serialized_comics = [{
                 'id': comic.id,
                 'title': comic.title,
-                'description': comic.description,
+                'description': comic.comic_description,
                 'image': comic.image_url
             } for comic in user_comics]
             return jsonify(serialized_comics), 200
@@ -216,12 +216,7 @@ def collection(user_id):  # Add the user_id as an argument
         user.comics.append(comic)
         db.session.commit()
 
-        collection = [comic.title for comic in user.comics]  # Modify this line
-
-        return jsonify({
-            'message': 'Comic added to collection',
-            'collection': f'{collection}'
-        }), 201
+        return jsonify({'message': 'Comic added to collection'}), 201
 
 
 @app.route('/collection/<int:user_id>/<int:comic_id>', methods=['DELETE'])
@@ -246,21 +241,6 @@ def delete_comic_from_collection(user_id, comic_id):
 
     return jsonify({'message': 'Comic successfully removed from the user\'s collection'}), 200
 
-
-# @app.route('/comics/<comic_id>')
-# def get_comic_details(comic_id):
-#     comic = Comic.query.get(comic_id)
-#     if not comic:
-#         return jsonify({'message': 'Comic not found'}), 404
-
-#     serialized_comic = {
-#         'id': comic.id,
-#         'title': comic.title,
-#         'description': comic.description,
-#         'image_url': comic.image_url,
-#     }
-
-#     return jsonify(serialized_comic), 200
 
 
 @app.route('/user', methods=['POST'])
