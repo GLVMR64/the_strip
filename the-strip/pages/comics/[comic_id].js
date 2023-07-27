@@ -40,7 +40,7 @@ const ComicDetails = () => {
       return;
     }
 
-    const addToCollectionURL = `/collection/${userId}`;
+    const addToCollectionURL = `http://127.0.0.1:5555/collection/${userId}`;
     const comicData = { comic_id: comic_id };
 
     try {

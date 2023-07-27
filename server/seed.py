@@ -64,17 +64,6 @@ def seed_comics(num_fetches):
 
 
 def seed_reviews():
-    # Check if the User and Comic tables exist in the database
-    if not db.engine.dialect.has_table(db.engine, 'user') or not db.engine.dialect.has_table(db.engine, 'comic'):
-        print('Error: User or Comic table does not exist. Please seed User and Comic data first.')
-        return
-
-    # Check if any reviews already exist in the database
-    existing_reviews_count = db.session.query(func.count(Review.id)).scalar()
-    if existing_reviews_count > 0:
-        print('Reviews already exist in the database. Aborting review seeding.')
-        return
-
     # Create review objects and add them to the session
     reviews = [
         Review(comment='Great comic!', user_id=1, comic_id=1),
@@ -85,4 +74,10 @@ def seed_reviews():
         db.session.add(review)
     db.session.commit()
 
-    print('Review seeding completed.')
+
+if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
+        # seed_user()
+        # seed_comics(num_fetches=50)
+        seed_reviews()
