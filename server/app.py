@@ -5,7 +5,7 @@ from flask_migrate import Migrate
 from datetime import datetime, timedelta
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash
-from models import db, User, Comic, UserComic,Review
+from models import db, User, Comic, UserComic, Review
 
 import hashlib
 import secrets
@@ -97,7 +97,8 @@ class Registration(Resource):
         cookie_value = secrets.token_hex(16)
 
         # Set the user's cookie value and expiration time
-        response = make_response(jsonify({'message': 'User registered successfully'}), 201)
+        response = make_response(
+            jsonify({'message': 'User registered successfully'}), 201)
         response.set_cookie('user_id', str(user.id),
                             expires=datetime.utcnow() + timedelta(hours=24),
                             secure=True, samesite='None')
@@ -106,7 +107,8 @@ class Registration(Resource):
                             secure=True, samesite='None')
 
         user.cookie_value = cookie_value
-        user.cookie_expiration = datetime.utcnow() + timedelta(hours=24)  # Set the expiration time
+        user.cookie_expiration = datetime.utcnow(
+        ) + timedelta(hours=24)  # Set the expiration time
 
         db.session.add(user)
         db.session.commit()
@@ -169,12 +171,12 @@ def login():
 
     return response, 200
 
-
     # Debug statements to verify cookie is being set correctly
     print(f"User ID: {user.id}")
     print(f"Cookie value: {cookie_value}")
 
     return response, 200
+
 
 @app.route('/comics/<int:comic_id>/add-review', methods=['POST'])
 def add_review(comic_id):
@@ -182,7 +184,7 @@ def add_review(comic_id):
 
     # Get the user_id from the 'user_id' cookie in the request
     user_id_cookie = request.cookies.get('user_id')
-    
+
     # Check if the user is authenticated
     if user_id_cookie is None:
         return jsonify({"error": "User not authenticated."}), 401
@@ -202,7 +204,8 @@ def add_review(comic_id):
             return jsonify({"error": "Comic not found."}), 404
 
         # Add the review to the database
-        review = Review(user_id=user_id, comic_id=comic_id, review_text=review_text)
+        review = Review(user_id=user_id, comic_id=comic_id,
+                        review_text=review_text)
         db.session.add(review)
         db.session.commit()
 
@@ -210,6 +213,26 @@ def add_review(comic_id):
     else:
         return jsonify({"error": "Review data is missing."}), 400
 
+
+@app.route('/comics/<int:comic_id>/reviews', methods=['GET'])
+def get_comic_reviews(comic_id):
+    comic = Comic.query.get(comic_id)
+    if not comic:
+        return jsonify({'message': 'Comic not found.'}), 404
+
+    reviews = Review.query.filter_by(comic_id=comic_id).all()
+
+    serialized_reviews = []
+    for review in reviews:
+        serialized_review = {
+            'id': review.id,
+            'user_id': review.user_id,
+            'review_text': review.review_text,
+            # Add other fields as needed for the review details
+        }
+        serialized_reviews.append(serialized_review)
+
+    return jsonify(serialized_reviews), 200
 
 
 @app.route('/collection/<int:user_id>', methods=['GET', 'POST'])
@@ -250,7 +273,6 @@ def collection(user_id):
         db.session.commit()
 
         return jsonify({'message': 'Comic added to collection'}), 201
-
 
 
 @app.route('/collection/<int:user_id>/<int:comic_id>', methods=['DELETE'])
@@ -325,7 +347,6 @@ def delete_user(user_id):
     db.session.commit()
 
     return jsonify({'message': 'User deleted successfully'}), 200
-    
 
 
 if __name__ == '__main__':

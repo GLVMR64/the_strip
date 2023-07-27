@@ -4,6 +4,7 @@ import Cookies from 'js-cookie';
 import Navbar from '@/components/Navbar';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import ComicReviews from '../../app/components/Reviews'; // Import the ComicReviews component
 
 const ComicDetails = () => {
   const router = useRouter();
@@ -29,6 +30,7 @@ const ComicDetails = () => {
       }
     };
 
+    // Call the fetchComic function only when comic_id changes
     if (comic_id) {
       fetchComic();
     }
@@ -108,26 +110,38 @@ const ComicDetails = () => {
             <p className="text-center text-white">Loading...</p>
           ) : (
             <>
-              <h2 className="text-2xl font-bold mb-4 text-white">{comic.title}</h2>
-              <p className="text-gray-500 mb-2 text-white">Release Year: {comic.release_year}</p>
-              <p className="text-white mb-4">{comic.description}</p>
-              <img src={comic.image} alt={comic.title} className="w-full h-40 object-cover rounded-lg mb-4" />
-              <div className="flex justify-between mt-4">
-                <button
-                  type="button"
-                  className="bg-blue-500 text-white px-4 py-2 rounded"
-                  onClick={() => router.push('/comics')}
-                >
-                  Go back to Comics
-                </button>
-                <button
-                  type="button"
-                  className="bg-blue-500 text-white px-4 py-2 rounded"
-                  onClick={handleAddToCollection}
-                >
-                  Add to Collection
-                </button>
-              </div>
+              {comic ? (
+                <>
+                  <img
+                    src={comic.image}
+                    alt={comic.title}
+                    className="w-full h-60 object-contain rounded-lg mb-4" // Adjusted styling for the image
+                  />
+                  <h2 className="text-2xl font-bold mb-4 text-white">{comic.title}</h2>
+                  <p className="text-gray-500 mb-2 text-white">Release Year: {comic.release_date}</p>
+                  <p className="text-white mb-4">{comic.comic_description}</p>
+                  <div className="flex justify-between mt-4">
+                    <button
+                      type="button"
+                      className="bg-blue-500 text-white px-4 py-2 rounded"
+                      onClick={() => router.push('/comics')}
+                    >
+                      Go back to Comics
+                    </button>
+                    <button
+                      type="button"
+                      className="bg-blue-500 text-white px-4 py-2 rounded"
+                      onClick={handleAddToCollection}
+                    >
+                      Add to Collection
+                    </button>
+                  </div>
+                  {/* Pass the comicId to the ComicReviews component */}
+                  <ComicReviews comicId={comic.id} />
+                </>
+              ) : (
+                <p className="text-white">Comic not found.</p>
+              )}
             </>
           )}
         </div>
@@ -135,6 +149,7 @@ const ComicDetails = () => {
       <ToastContainer />
     </>
   );
+  
 };
 
 export default ComicDetails;
