@@ -40,25 +40,19 @@ class Comics(Resource):
         comics = Comic.query.all()
         serialized_comics = []
         for comic in comics:
-            # Calculate the average rating and the number of ratings for each comic
-            total_rating = sum(rating.value for rating in comic.ratings)
-            num_ratings = len(comic.ratings)
-            average_rating = total_rating / num_ratings if num_ratings > 0 else 0
-
             serialized_comic = {
                 'id': comic.id,
                 'title': comic.title,
-                'description': comic.description,
                 'image': comic.image_url,
-                'average_rating': average_rating,
-                'num_ratings': num_ratings
+                # Add other fields as needed for comic details
             }
             serialized_comics.append(serialized_comic)
 
         return serialized_comics, 200
 
+api.add_resource(Comics, '/comics')
 
-@app.route('/comics/${comic_id}', methods=['GET'])
+@app.route('/comics/<int:comic_id>', methods=['GET'])
 def get_comic(comic_id):
     comic = Comic.query.get(comic_id)
     if not comic:
@@ -67,15 +61,15 @@ def get_comic(comic_id):
     serialized_comic = {
         'id': comic.id,
         'title': comic.title,
-        'description': comic.description,
+        'comic_description': comic.comic_description,
         'image': comic.image_url,
+        'release_date': comic.release_date
         # Add other fields as needed for comic details
     }
 
     return jsonify(serialized_comic), 200
 
 
-api.add_resource(Comics, '/comics')
 
 
 class Registration(Resource):
@@ -250,23 +244,23 @@ def delete_comic_from_collection(user_id, comic_id):
     user.comics.remove(comic)
     db.session.commit()
 
-    return jsonify({'message': 'Comic successfully removed from the user\'s collection', 'collection': f'{serialized_comics}'}), 200
+    return jsonify({'message': 'Comic successfully removed from the user\'s collection'}), 200
 
 
-@app.route('/comics/<comic_id>')
-def get_comic_details(comic_id):
-    comic = Comic.query.get(comic_id)
-    if not comic:
-        return jsonify({'message': 'Comic not found'}), 404
+# @app.route('/comics/<comic_id>')
+# def get_comic_details(comic_id):
+#     comic = Comic.query.get(comic_id)
+#     if not comic:
+#         return jsonify({'message': 'Comic not found'}), 404
 
-    serialized_comic = {
-        'id': comic.id,
-        'title': comic.title,
-        'description': comic.description,
-        'image_url': comic.image_url,
-    }
+#     serialized_comic = {
+#         'id': comic.id,
+#         'title': comic.title,
+#         'description': comic.description,
+#         'image_url': comic.image_url,
+#     }
 
-    return jsonify(serialized_comic), 200
+#     return jsonify(serialized_comic), 200
 
 
 @app.route('/user', methods=['POST'])
@@ -290,7 +284,7 @@ def get_user_data():
         return jsonify({"error": "Email parameter missing"}), 400
 
 
-@app.route('/collection/<int:user_id>/', methods=['PATCH'])
+@app.route('/collection/<int:user_id>/edit-name', methods=['PATCH'])
 def edit_user_name(user_id):
     data = request.get_json()
     new_name = data.get('name')
@@ -306,6 +300,7 @@ def edit_user_name(user_id):
     return jsonify({'message': 'User name updated successfully', 'name': new_name}), 200
 
 
+
 @app.route('/collection/<int:user_id>', methods=['DELETE'])
 def delete_user(user_id):
     # Check if the user exists in the database
@@ -318,7 +313,6 @@ def delete_user(user_id):
     db.session.commit()
 
     return jsonify({'message': 'User deleted successfully'}), 200
-
 
 
 if __name__ == "__main__":

@@ -9,7 +9,7 @@ export default function Comics() {
   useEffect(() => {
     const fetchComics = async () => {
       try {
-        const response = await fetch("/comics");
+        const response = await fetch("http://127.0.0.1:5555/comics");
         if (response.ok) {
           const data = await response.json();
           setComics(data);

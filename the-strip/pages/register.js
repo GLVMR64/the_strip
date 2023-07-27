@@ -89,7 +89,7 @@ export default function Register() {
                   <a className="text-blue-500">Login here</a>
                 </Link>
               </div>
-              <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
+              <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded mt-4 w-full">
                 Register
               </button>
             </Form>

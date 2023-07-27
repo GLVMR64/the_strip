@@ -41,15 +41,12 @@ def seed_comics(num_fetches):
             description = comic_data.get('description', '')
             thumbnail = comic_data.get('thumbnail', {})
             image_url = f"{thumbnail.get('path', '')}/portrait_uncanny.{thumbnail.get('extension', '')}"
-            author_data = comic_data.get('creators', {}).get('items', [])
-            author = ', '.join(creator.get('name', '') for creator in author_data)
             release_date = comic_data.get('dates', [{}])[0].get('date', '')[:10]  # Extract only the date part
 
             # Create the Comic object with the fetched information
             comic = Comic(
                 title=title,
                 comic_description=description,
-                author=author,
                 release_date=release_date,
                 image_url=image_url
             )

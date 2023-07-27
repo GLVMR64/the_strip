@@ -12,7 +12,7 @@ export default function Collection() {
     // Fetch the user's collection data based on the ID
     const fetchCollectionData = async () => {
       try {
-        const response = await fetch(`/api/collection/${id}`); // Replace with your API endpoint to fetch the collection data
+        const response = await fetch(`/collection/${id}`); // Replace with your API endpoint to fetch the collection data
         if (response.ok) {
           const data = await response.json();
           setCollectionData(data);

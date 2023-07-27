@@ -42,7 +42,7 @@ const Collection = () => {
     event.preventDefault();
 
     try {
-      const response = await fetch(`http://127.0.0.1:5555/user/${user.id}/edit-name`, {
+      const response = await fetch(`http://127.0.0.1:5555/collection/${user.id}/edit-name`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -78,11 +78,7 @@ const Collection = () => {
     }
   };
 
-  const toggleComicExpansion = (comicId) => {
-    setExpandedComicId((prevExpandedComicId) =>
-      prevExpandedComicId === comicId ? null : comicId
-    );
-  };
+  
 
   const removeFromCollection = async (comicId) => {
     try {
