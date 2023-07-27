@@ -7,7 +7,6 @@ from flask_cors import CORS
 from werkzeug.security import generate_password_hash
 from models import db, User, Comic, UserComic,Review
 
-
 import hashlib
 import secrets
 import os
@@ -170,13 +169,29 @@ def login():
 
     return response, 200
 
+
+    # Debug statements to verify cookie is being set correctly
+    print(f"User ID: {user.id}")
+    print(f"Cookie value: {cookie_value}")
+
+    return response, 200
+
 @app.route('/comics/<int:comic_id>/add-review', methods=['POST'])
 def add_review(comic_id):
     data = request.get_json()
-    user_id = request.user_id  
 
-    if not user_id:
+    # Get the user_id from the 'user_id' cookie in the request
+    user_id_cookie = request.cookies.get('user_id')
+    
+    # Check if the user is authenticated
+    if user_id_cookie is None:
         return jsonify({"error": "User not authenticated."}), 401
+
+    # Try to convert the user_id_cookie to an integer
+    try:
+        user_id = int(user_id_cookie)
+    except ValueError:
+        return jsonify({"error": "Invalid user_id in cookie."}), 401
 
     if 'review' in data:
         review_text = data['review']
@@ -194,6 +209,7 @@ def add_review(comic_id):
         return jsonify({"message": "Review added successfully."}), 200
     else:
         return jsonify({"error": "Review data is missing."}), 400
+
 
 
 @app.route('/collection/<int:user_id>', methods=['GET', 'POST'])

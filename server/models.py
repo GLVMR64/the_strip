@@ -56,14 +56,13 @@ class Comic(db.Model):
 class Review(db.Model):
     __tablename__ = 'reviews'
     id = db.Column(db.Integer, primary_key=True)
-    comment = db.Column(db.Text)
+    review_text = db.Column(db.Text)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     comic_id = db.Column(db.Integer, db.ForeignKey(
         'comics.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(
         db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
 
 
 class UserComic(db.Model):

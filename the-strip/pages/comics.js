@@ -2,7 +2,7 @@ import React, { useEffect, useState, useContext } from 'react';
 import { useRouter } from 'next/router';
 import UserContext from '../app/components/utils/UserContext'; // Import the UserContext
 import Navbar from '../app/components/Navbar';
-import Cookies from 'js-cookie';
+
 
 const Comics = () => {
   const router = useRouter();
