@@ -6,7 +6,7 @@ import Navbar from "../../app/components/Navbar";
 export default function CollectionsPage() {
   const router = useRouter();
   const { user_id } = router.query;
-  const { user, updateUserContext } = useContext(UserContext); // Add updateUserContext to access the function to update user context
+  const { user, updateUserContext } = useContext(UserContext);
   const [collectionData, setCollectionData] = useState(null);
   const [userCollection, setUserCollection] = useState([]);
 
@@ -35,31 +35,57 @@ export default function CollectionsPage() {
     }
   }, [user_id, user, updateUserContext]);
 
-  // Function to add the comic to the user's collection
-  const addToCollection = async (comicId) => {
-    // Implement the logic to add a comic to the user's collection
-  };
+  
 
-  // Function to remove the comic from the user's collection
-  const removeFromCollection = async (comicId) => {
-    // Implement the logic to remove a comic from the user's collection
+  const handleRemoveClick = async (comicId) => {
+    try {
+      const response = await fetch(`http://127.0.0.1:5555/collection/${user_id}/${comicId}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        setCollectionData((prevData) =>
+          prevData.filter((comic) => comic.id !== comicId)
+        );
+      } else {
+        console.error('Error removing comic from collection:', response);
+      }
+    } catch (error) {
+      console.error('Error removing comic from collection:', error);
+    }
   };
-
   return (
     <>
       <Navbar />
       <div className="min-h-screen bg-gradient-to-r from-red-500 to-purple-900">
         <div className="max-w-7xl mx-auto py-8 px-4">
-          <h1 className="text-2xl font-bold mb-4">Collection</h1>
-          <p className="text-white mb-4">Hello {user_id}</p>
+          <h1 className="text-3xl font-bold mb-4 text-white">Collection</h1>
+          
+          <p className="text-white mb-4">Hello {user?.name || "there"}</p>
           {collectionData ? (
-            <ul className="grid grid-cols-1 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {collectionData.map((comic) => (
-                <li key={comic.id} className="bg-white rounded-lg shadow-lg overflow-hidden">
-                  {/* Render each comic item in the user's collection */}
-                </li>
+                <div key={comic.id} className="bg-white rounded-lg shadow-lg">
+                  <img
+                    src={comic.image}
+                    alt={comic.title}
+                    className="w-full h-56 object-cover rounded-t-lg"
+                  />
+                  <div className="p-4">
+                    <h2 className="text-xl font-semibold mb-2 text-black">{comic.title}</h2>
+                    <p className="text-gray-600">{comic.comic_description}</p>
+                  </div>
+                  <div className="p-4 flex justify-end">
+                    {/* Add the remove button with gradient background */}
+                    <button
+                      onClick={() => handleRemoveClick(comic.id)}
+                      className="bg-gradient-to-r from-red-500 to-purple-600 text-white px-4 py-2 rounded"
+                    >
+                      Remove from Collection
+                    </button>
+                  </div>
+                </div>
               ))}
-            </ul>
+            </div>
           ) : (
             <p className="text-white">Loading collection data...</p>
           )}
