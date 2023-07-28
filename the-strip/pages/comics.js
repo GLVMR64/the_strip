@@ -1,93 +1,94 @@
 import React, { useEffect, useState, useContext } from "react";
-import Navbar from "../app/components/Navbar";
-import ReactLoading from "react-loading";
+import { useRouter } from "next/router";
 import UserContext from "../app/components/utils/UserContext";
+import Navbar from "../app/components/Navbar";
 
-export default function Comics() {
-  const [comics, setComics] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [collection, setCollection] = useState([]);
+const Comics = () => {
+  const router = useRouter();
   const { user } = useContext(UserContext);
-  const [expandedComics, setExpandedComics] = useState([]);
+  const [comics, setComics] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchComics = async () => {
       try {
-        const response = await fetch("http://localhost:5555/comics");
-        const data = await response.json();
-        setComics(data);
-        setLoading(false);
+        if (!user) {
+          router.push("/login");
+          return;
+        }
+
+        const response = await fetch("http://127.0.0.1:5555/comics");
+        if (response.ok) {
+          const data = await response.json();
+          setComics(data);
+        } else {
+          console.error("Error fetching comics:", response);
+        }
       } catch (error) {
         console.error("Error fetching comics:", error);
-        setComics([]);
+      } finally {
         setLoading(false);
       }
     };
 
     fetchComics();
-  }, []);
+  }, [user]);
 
-  const toggleComicExpansion = (comicId) => {
-    setExpandedComics((prevExpandedComics) => {
-      if (prevExpandedComics.includes(comicId)) {
-        return prevExpandedComics.filter((id) => id !== comicId);
-      } else {
-        return [...prevExpandedComics, comicId];
-      }
-    });
+  const handleComicClick = (comicId) => {
+    router.push(`/comics/${comicId}`);
   };
 
-  const addToCollection = async (comicId) => {
-    try {
-      await fetch("http://localhost:5555/collection", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ comicId, id: user.id }),
-      })
-        .then((res) => res.json())
-        .then((data) => setCollection([...collection, data.collection]));
-    } catch (error) {
-      console.error("Failed to add comic to collection:", error);
-    }
+  const handleSearchChange = (event) => {
+    setSearchTerm(event.target.value);
   };
+
+  const filteredComics = comics.filter((comic) =>
+    comic.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <>
       <Navbar />
-      <div className="flex flex-wrap items-center justify-center min-h-screen bg-gradient-to-r from-red-500 to-purple-900">
-        {loading ? (
-          <div className="flex items-center justify-center min-h-screen">
-            <ReactLoading type="spin" color="#ffffff" height={80} width={80} />
-          </div>
-        ) : (
-          comics.map((comic) => (
-            <div
-              key={comic.id}
-              className="max-w-sm mx-4 mb-4 bg-white rounded-lg shadow-lg overflow-hidden"
-              style={{ backgroundSize: "cover", backgroundPosition: "center" }}
-              onClick={() => toggleComicExpansion(comic.id)}
-            >
-              <img src={comic.image} alt={comic.title} />
-              <div className="p-4">
-                <h3 className="text-lg font-semibold">{comic.title}</h3>
-                {expandedComics.includes(comic.id) && (
-                  <>
-                    <p>{comic.description}</p>
-                    <button
-                      className="bg-blue-500 text-white px-4 py-2 rounded mt-4"
-                      onClick={() => addToCollection(comic.id)}
-                    >
-                      Add to Collection
-                    </button>
-                  </>
-                )}
-              </div>
+      {loading ? (
+        <div>Loading...</div>
+      ) : (
+        <div className="flex justify-center items-center min-h-screen bg-gradient-to-r from-red-500 to-purple-900">
+          <div className="max-w-screen-sm">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={handleSearchChange}
+              placeholder="Search Comics..."
+              className="w-full p-2 mb-4 border border-gray-300 rounded text-black"
+            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {filteredComics.length === 0 ? (
+                <p className="text-black">No comics found.</p>
+              ) : (
+                filteredComics.map((comic) => (
+                  <div
+                    key={comic.id}
+                    className="p-4 border rounded-lg cursor-pointer hover:shadow-md bg-white"
+                    onClick={() => handleComicClick(comic.id)}
+                  >
+                    <h3 className="mt-2 text-lg font-semibold text-black">
+                      {comic.title}
+                    </h3>
+                    <img
+                      src={comic.image}
+                      alt={comic.title}
+                      className="w-full h-64 object-contain"
+                    />
+                  </div>
+                ))
+              )}
             </div>
-          ))
-        )}
-      </div>
+          </div>
+        </div>
+      )}
     </>
   );
-}
+};
+
+export default Comics;

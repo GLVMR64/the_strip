@@ -1,8 +1,8 @@
-import { useState } from "react";
-import UserContext from "./UserContext";
+import { useState, useEffect } from "react";
+import { UserContext } from './UserContext';
 
 export const UserProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState({}); // Initialize user as an empty object
 
   const updateUserContext = (newUser) => {
     setUser((prevUser) => ({
@@ -12,15 +12,24 @@ export const UserProvider = ({ children }) => {
   };
 
   const logIn = (id) => {
-    updateUserContext({ loggedIn: false, id: id });
+    updateUserContext({ loggedIn: true, id: id });
+    localStorage.setItem("userToken", id);
   };
 
-  const logOut = (id) => {
-    updateUserContext({ loggedIn: false, id: id });
+  const logOut = () => {
+    updateUserContext({ loggedIn: false, id: null });
+    localStorage.removeItem("userToken");
   };
+
+  useEffect(() => {
+    const userToken = localStorage.getItem("userToken");
+    if (userToken) {
+      logIn(userToken);
+    }
+  }, []);
 
   return (
-    <UserContext.Provider value={{ user, logIn, logOut }}>
+    <UserContext.Provider value={{ user, logIn, logOut, updateUserContext }}>
       {children}
     </UserContext.Provider>
   );

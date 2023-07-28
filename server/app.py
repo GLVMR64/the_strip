@@ -1,23 +1,24 @@
 from flask import Flask, request, jsonify, make_response
 from flask_restful import Resource, Api
-import uuid
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from datetime import datetime, timedelta
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash
-from models import db, User, Comic, UserComic
+from models import db, User, Comic, Review
+
 import hashlib
 import secrets
-import time
 import os
+import time
 
 public_key = '1f2440e3320ab3d9b466c2c1699cc76a'
 private_key = 'c717b70ce1da6ea17908f2803eb728b3610d1af6'
 url = 'https://gateway.marvel.com/v1/public/comics'
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, supports_credentials=True)  # Enable CORS with credentials support
+
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 
 api = Api(app)
@@ -38,140 +39,237 @@ def hello():
 class Comics(Resource):
     def get(self):
         comics = Comic.query.all()
-        serialized_comics = [{
-            'id': comic.id,
-            'title': comic.title,
-            'description': comic.description,
-            'image': comic.image_url
-        } for comic in comics]
+        serialized_comics = []
+        for comic in comics:
+            serialized_comic = {
+                'id': comic.id,
+                'title': comic.title,
+                'image': comic.image_url,
+                # Add other fields as needed for comic details
+            }
+            serialized_comics.append(serialized_comic)
+
         return serialized_comics, 200
 
 
 api.add_resource(Comics, '/comics')
 
 
+@app.route('/comics/<int:comic_id>', methods=['GET'])
+def get_comic(comic_id):
+    comic = Comic.query.get(comic_id)
+    if not comic:
+        return jsonify({'message': 'Comic not found'}), 404
+
+    serialized_comic = {
+        'id': comic.id,
+        'title': comic.title,
+        'comic_description': comic.comic_description,
+        'image': comic.image_url,
+        'release_date': comic.release_date
+        # Add other fields as needed for comic details
+    }
+
+    return jsonify(serialized_comic), 200
+
+
 class Registration(Resource):
     def post(self):
         data = request.get_json()
+        try:
+            # Extract user information from the request data
+            name = data['name']
+            email = data['email']
+            password = data['password']
 
-        # Extract user information from the request data
-        name = data['name']
-        email = data['email']
-        password = data['password']
+            # Check if a user with the same email already exists
+            existing_user = User.query.filter_by(email=email).first()
+            if existing_user:
+                return {'message': 'User with the same email already exists'}, 409
 
-        # Validate the input data using the validation schema or any other validation method
+            # Hash the password
+            password_hash = generate_password_hash(password, method='sha256')
 
-        # Check if a user with the same email already exists
-        existing_user = User.query.filter_by(email=email).first()
-        if existing_user:
-            return {'message': 'User with the same email already exists'}, 409
+            # Create a new User object and save it to the database
+            user = User(name=name, email=email, password_hash=password_hash)
 
-        # Hash the password
-        password_hash = generate_password_hash(password, method='sha256')
+            # Generate a random cookie value
+            cookie_value = secrets.token_hex(16)
 
-        # Create a new User object and save it to the database
-        user = User(name=name, email=email, password_hash=password_hash)
+            db.session.add(user)
+            db.session.commit()
 
-        # Generate a random cookie value
-        cookie_value = secrets.token_hex(16)
+            # Return the user data as a dictionary in the response
+            user_data = {
+                'id': user.id,
+                'name': user.name,
+                'email': user.email,
+                # Add other fields you want to include in the serialized user data
+                # For example: 'created_at', 'updated_at', etc.
+            }
 
-        # Set the user's cookie value and expiration time
-        response = jsonify({'message': 'User registered successfully'})
-        response.set_cookie('user_id', str(user.id),
-                            expires=datetime.utcnow() + timedelta(hours=24))
+            # Set the user's cookie value and expiration time
+            response = make_response(jsonify(user_data), 201)
+            response.set_cookie('user_id', str(user.id),
+                                expires=datetime.utcnow() + timedelta(hours=24),
+                                secure=True, samesite='None')
+            response.set_cookie('cookie_value', cookie_value,
+                                expires=datetime.utcnow() + timedelta(hours=24),
+                                secure=True, samesite='None')
 
-        # Store the cookie value in local storage
-        response.headers.add('Access-Control-Allow-Origin', '*')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
-        response.headers.add('Access-Control-Allow-Methods', 'POST')
-        response.headers.add('Access-Control-Allow-Credentials', 'true')
-        response.headers.add('Access-Control-Expose-Headers', 'Set-Cookie')
-        response.headers.add(
-            'Set-Cookie', f'cookie_value={cookie_value}; Secure; SameSite=None; Expires={datetime.utcnow() + timedelta(hours=24)}')
+            user.cookie_value = cookie_value
+            user.cookie_expiration = datetime.utcnow(
+            ) + timedelta(hours=24)  # Set the expiration time
 
-        user.cookie_value = cookie_value
-        user.cookie_expiration = datetime.utcnow(
-        ) + timedelta(hours=24)  # Set the expiration time
-
-        db.session.add(user)
-        db.session.commit()
-
-        return response, 201
+            # Redirect to the home page after successful registration
+            response.headers['Location'] = '/'
+            return response
+        except Exception as e:
+            return make_response({"message": str(e)}, 400)
 
 
-api.add_resource(Registration, '/register')
+# Use a different route for the Registration resource
+api.add_resource(Registration, '/register')  # Change the route to '/register'
 
 
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
+    try:
+        # Extract user information from the request data
+        email = data.get('email')
+        password = data.get('password')
 
-    # Extract user information from the request data
-    email = data['email']
-    password = data['password']
+        if not email or not password:
+            return jsonify({'message': 'Email and password are required'}), 400
 
-    # Validate the input data using the validation schema or any other validation method
+        # Validate the input data using the validation schema or any other validation method
 
-    # Check if a user with the given email exists
-    user = User.query.filter_by(email=email).first()
+        # Check if a user with the given email exists
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            return jsonify({'message': 'Invalid email or password'}), 400
+
+        # Check if the password is correct
+        if not user.check_password(password):
+            return jsonify({'message': 'Invalid email or password'}), 400
+
+        # Generate a new cookie value
+        cookie_value = secrets.token_hex(16)
+
+        # Set the cookie in the response with an expiration time of 24 hours
+        response = jsonify({
+            'id': user.id,
+            'name': user.name,
+            'email': user.email,
+            'cookie_value': cookie_value,
+            # Add other fields as needed
+        })
+        response.set_cookie('user_id', str(user.id),
+                            expires=datetime.utcnow() + timedelta(hours=24))
+        response.set_cookie('cookie_value', cookie_value,
+                            expires=datetime.utcnow() + timedelta(hours=24))
+
+        # Update the user's cookie value in the database and commit the changes
+        user.cookie_expiration = datetime.utcnow() + timedelta(hours=24)
+        user.user_cookie = cookie_value
+        db.session.add(user)  # Add the user object to the session
+        db.session.commit()
+
+        return response, 200
+
+    except Exception as e:
+        return make_response({"message": str(e)}, 400)
+
+
+@app.route('/comics/<int:comic_id>/add-review', methods=['POST'])
+def add_review(comic_id):
+    data = request.get_json()
+
+    # Get the user_id and cookie_value from the cookies in the request
+    user_id_cookie = request.cookies.get('user_id')
+    cookie_value_cookie = request.cookies.get('cookie_value')
+
+    # Check if both user_id and cookie_value cookies exist
+    if user_id_cookie is None or cookie_value_cookie is None:
+        print(user_id_cookie, cookie_value_cookie)
+        return jsonify({"error": "User not authenticated."}), 401
+
+    # Try to convert the user_id_cookie to an integer
+    try:
+        user_id = int(user_id_cookie)
+    except ValueError:
+        return jsonify({"error": "Invalid user_id in cookie."}), 401
+
+    # Fetch the user from the database using the user_id and cookie_value
+    user = User.query.filter_by(
+        id=user_id, user_cookie=cookie_value_cookie).first()
+
+    # Check if the user exists and the cookie_value is valid
     if not user:
-        return jsonify({'message': 'Invalid email or password'}), 400
+        return jsonify({"error": "Invalid user credentials."}), 401
 
-    # Check if the password is correct
-    if not user.check_password(password):
-        return jsonify({'message': 'Invalid email or password'}), 400
+    if 'review' in data:
+        review_text = data['review']
 
-    # Generate a new cookie value
-    cookie_value = secrets.token_hex(16)
+        # Check if the comic exists in comics_data
+        comic = Comic.query.get(comic_id)
+        if not comic:
+            return jsonify({"error": "Comic not found."}), 404
 
-    # Set the cookie in the response with an expiration time of 24 hours
-    response = jsonify({
-        'message': 'Login successful',
-        'id': f"{user.id}"
-    })
+        # Add the review to the database
+        review = Review(user_id=user_id, comic_id=comic_id,
+                        review_text=review_text)
+        db.session.add(review)
+        db.session.commit()
 
-    response.set_cookie('user_id', str(user.id),
-                        expires=datetime.utcnow() + timedelta(hours=24),
-                        secure=True, samesite='None')
-    response.set_cookie('cookie_value', cookie_value,
-                        expires=datetime.utcnow() + timedelta(hours=24),
-                        secure=True, samesite='None')
-
-    # Update the user's cookie value in the database
-    user.cookie_value = cookie_value
-    user.cookie_expiration = datetime.utcnow() + timedelta(hours=24)
-    db.session.commit()
-
-    return response, 200
+        return jsonify({"message": "Review added successfully."}), 200
+    else:
+        return jsonify({"error": "Review data is missing."}), 400
 
 
-@app.route('/collection', methods=['GET', 'POST'])
-def collection():
+@app.route('/comics/<int:comic_id>/add-reviews', methods=['GET'])
+def get_comic_reviews(comic_id):
+    comic = Comic.query.get(comic_id)
+    if not comic:
+        return jsonify({'message': 'Comic not found.'}), 404
+
+    reviews = Review.query.filter_by(comic_id=comic_id).all()
+
+    serialized_reviews = []
+    for review in reviews:
+        serialized_review = {
+            'id': review.id,
+            'user_id': review.user_id,
+            'review_text': review.review_text,
+            # Add other fields as needed for the review details
+        }
+        serialized_reviews.append(serialized_review)
+
+    return jsonify(serialized_reviews), 200
+
+
+@app.route('/collection/<int:user_id>', methods=['GET', 'POST'])
+def collection(user_id):
     if request.method == 'GET':
-        # Check if the user's cookie exists and is valid
-        user_id = request.cookies.get('user_id')
-
-        if user_id:
-            user_comics = db.session.query(Comic).join(UserComic).filter(UserComic.user_id == user_id).all()
-            if user_comics:
-                serialized_comics = [{
-                    'id': comic.id,
-                    'title': comic.title,
-                    'description': comic.description,
-                    'image': comic.image_url
-                } for comic in user_comics]
-                return jsonify(serialized_comics), 200
-            else:
-                return jsonify({'message': 'No comics found in the collection'}), 404
+        user = User.query.get(user_id)
+        if user:
+            user_comics = user.comics
+            serialized_comics = [{
+                'id': comic.id,
+                'title': comic.title,
+                'description': comic.comic_description,
+                'image': comic.image_url
+            } for comic in user_comics]
+            return jsonify(serialized_comics), 200
         else:
-            return jsonify({'message': 'Unauthorized'}), 401
+            return jsonify({'message': 'User not found'}), 404
 
     if request.method == 'POST':
         data = request.get_json()
-        id = data.get('id')
-        comic_id = data.get('comicId')
+        comic_id = data.get('comic_id')  # Update the key to 'comic_id'
 
-        user = User.query.filter_by(id=id).first()
+        user = User.query.get(user_id)
         comic = Comic.query.get(comic_id)
 
         if not user:
@@ -183,55 +281,87 @@ def collection():
         if comic in user.comics:
             return jsonify({
                 'message': 'Comic already in collection',
-            }), 400
+            }), 400  # Return 400 (Bad Request) with custom message
 
         user.comics.append(comic)
         db.session.commit()
-        
-        collection = [comic.title for comic in user.comics]  # Modify this line
 
-        return jsonify({
-            'message': 'Comic added to collection',
-            'collection': f'{collection}'
-        }), 201
+        return jsonify({'message': 'Comic added to collection'}), 201
 
 
-@app.route('/comics/<comic_id>')
-def get_comic_details(comic_id):
+@app.route('/collection/<int:user_id>/<int:comic_id>', methods=['DELETE'])
+def delete_comic_from_collection(user_id, comic_id):
+    # Check if the user exists in the database
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'message': 'User not found'}), 404
+
+    # Check if the comic exists in the database
     comic = Comic.query.get(comic_id)
     if not comic:
         return jsonify({'message': 'Comic not found'}), 404
 
-    serialized_comic = {
-        'id': comic.id,
-        'title': comic.title,
-        'description': comic.description,
-        'image_url': comic.image_url,
-    }
+    # Check if the comic is in the user's collection
+    if comic not in user.comics:
+        return jsonify({'message': 'Comic not found in the user\'s collection'}), 404
 
-    return jsonify(serialized_comic), 200
+    # Remove the comic from the user's collection and commit the changes to the database
+    user.comics.remove(comic)
+    db.session.commit()
+
+    return jsonify({'message': 'Comic successfully removed from the user\'s collection'}), 200
 
 
-@app.route('/user', methods=['POST'])
-def get_user_data():
+# @app.route('/user', methods=['POST'])
+# def get_user_data():
+#     data = request.get_json()
+
+#     email = data.get('email')
+
+#     if email:
+#         user = User.query.filter_by(email=email).first()
+#         if user:
+#             serialized_user = {
+#                 "email": user.email,
+#                 "name": user.name,
+#                 # Add more fields as needed
+#             }
+#             return jsonify(serialized_user), 200
+#         else:
+#             return jsonify({"error": "User not found"}), 404
+    # else:
+    #     return jsonify({"error": "Email parameter missing"}), 400
+
+
+@app.route('/collection/<int:user_id>/edit-name', methods=['PATCH'])
+def edit_user_name(user_id):
     data = request.get_json()
+    new_name = data.get('name')
 
-    email = data.get('email')
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'message': 'User not found'}), 404
 
-    if email:
-        user = User.query.filter_by(email=email).first()
-        if user:
-            serialized_user = {
-                "email": user.email,
-                "name": user.name,
-                # Add more fields as needed
-            }
-            return jsonify(serialized_user), 200
-        else:
-            return jsonify({"error": "User not found"}), 404
-    else:
-        return jsonify({"error": "Email parameter missing"}), 400
+    # Update the user's name
+    user.name = new_name
+    db.session.commit()
+
+    return jsonify({'message': 'User name updated successfully', 'name': new_name}), 200
 
 
-if __name__ == "__main__":
-    app.run(port=5555, debug=True)
+@app.route('/collection/<int:user_id>', methods=['DELETE'])
+def delete_user(user_id):
+    # Check if the user exists in the database
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'message': 'User not found'}), 404
+
+    # Delete the user from the database
+    db.session.delete(user)
+    db.session.commit()
+
+    return jsonify({'message': 'User deleted successfully'}), 200
+
+
+if __name__ == '__main__':
+    app.run(host='127.0.0.1', port=5555)
