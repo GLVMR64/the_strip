@@ -1,34 +1,29 @@
 import React, { useEffect, useState, useContext } from "react";
 import { useRouter } from "next/router";
-import UserContext from "../app/components/utils/UserContext"; // Import the UserContext
+import UserContext from "../app/components/utils/UserContext";
 import Navbar from "../app/components/Navbar";
 
 const Comics = () => {
   const router = useRouter();
+  const { user } = useContext(UserContext);
   const [comics, setComics] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // Retrieve the user ID and cookie value from the UserContext
-  const { user } = useContext(UserContext);
-  const userId = user?.id;
-  const cookieValue = user?.cookieValue;
- 
   useEffect(() => {
     const fetchComics = async () => {
       try {
-        if (user) {
-          const response = await fetch("http://127.0.0.1:5555/comics");
-          if (response.ok) {
-            const data = await response.json();
-            setComics(data);
-          } else {
-            console.error("Error fetching comics:", response);
-            
-          }
+        if (!user) {
+          router.push("/login");
+          return;
         }
-        else {
-          router.push('/register')
+
+        const response = await fetch("http://127.0.0.1:5555/comics");
+        if (response.ok) {
+          const data = await response.json();
+          setComics(data);
+        } else {
+          console.error("Error fetching comics:", response);
         }
       } catch (error) {
         console.error("Error fetching comics:", error);
@@ -38,16 +33,10 @@ const Comics = () => {
     };
 
     fetchComics();
-  }, []);
+  }, [user]);
 
   const handleComicClick = (comicId) => {
-    router.push({
-      pathname: `/comics/${comicId}`,
-      query: {
-        userId: userId,
-        cookieValue: cookieValue,
-      },
-    });
+    router.push(`/comics/${comicId}`);
   };
 
   const handleSearchChange = (event) => {

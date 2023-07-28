@@ -1,30 +1,33 @@
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
+import React, { useState, useEffect, useContext } from "react";
+import { useRouter } from "next/router";
 
-import Navbar from '@/components/Navbar';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import ComicReviews from '../../app/components/Reviews'; // Import the ComicReviews component
+import Navbar from "@/components/Navbar";
+import { ToastContainer, toast } from "react-toastify";
+import UserContext from "../../app/components/utils/UserContext";
+import "react-toastify/dist/ReactToastify.css";
 
 const ComicDetails = () => {
   const router = useRouter();
-  const { comic_id, userId, cookieValue } = router.query;
-
+  const { comic_id } = router.query;
+  const { user } = useContext(UserContext);
   const [comic, setComic] = useState(null);
   const [loading, setLoading] = useState(true);
+  const userId = user.id;
 
   useEffect(() => {
     const fetchComic = async () => {
       try {
-        const response = await fetch(`http://127.0.0.1:5555/comics/${comic_id}`);
+        const response = await fetch(
+          `http://127.0.0.1:5555/comics/${comic_id}`
+        );
         if (response.ok) {
           const data = await response.json();
           setComic(data);
         } else {
-          console.error('Error fetching comic:', response);
+          console.error("Error fetching comic:", response);
         }
       } catch (error) {
-        console.error('Error fetching comic:', error);
+        console.error("Error fetching comic:", error);
       } finally {
         setLoading(false);
       }
@@ -37,8 +40,9 @@ const ComicDetails = () => {
   }, [comic_id]);
 
   const handleAddToCollection = async () => {
-    if (!userId) {
-      console.error('User ID is not available.');
+    if (!userId || !comic_id) {
+      console.error("User ID or Comic ID is not available.");
+      console.log(userId, comic_id);
       return;
     }
 
@@ -46,20 +50,30 @@ const ComicDetails = () => {
     const comicData = { comic_id: comic_id };
 
     try {
+      // Retrieve the 'user_id' and 'cookie_value' cookies from the document
+      const cookies = document.cookie.split(";").reduce((acc, cookie) => {
+        const [key, value] = cookie.trim().split("=");
+        acc[key] = value;
+        return acc;
+      }, {});
+      const { user_id, cookie_value } = cookies;
+
       const response = await fetch(addToCollectionURL, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
+          user_id: user_id, // Include 'user_id' and 'cookie_value' in headers
+          cookie_value: cookie_value,
         },
         body: JSON.stringify(comicData),
-        credentials: 'include',
+        credentials: "include",
       });
 
       if (response.ok) {
         const data = await response.json();
-        if (data.message === 'Comic already in collection') {
-          toast.warning('Comic is already in collection!', {
-            position: 'top-right',
+        if (data.message === "Comic already in collection") {
+          toast.warning("Comic is already in collection!", {
+            position: "top-right",
             autoClose: 3000,
             hideProgressBar: true,
             closeOnClick: true,
@@ -67,8 +81,8 @@ const ComicDetails = () => {
             draggable: true,
           });
         } else {
-          toast.success('Comic added to collection!', {
-            position: 'top-right',
+          toast.success("Comic added to collection!", {
+            position: "top-right",
             autoClose: 3000,
             hideProgressBar: true,
             closeOnClick: true,
@@ -77,10 +91,9 @@ const ComicDetails = () => {
           });
         }
       } else {
-        // Handle non-200 response status (error)
-        console.error('Error adding comic to collection:', response);
-        toast.error('Comic already in collection!', {
-          position: 'top-right',
+        console.error("Error adding comic to collection:", response);
+        toast.error("Error adding comic to collection", {
+          position: "top-right",
           autoClose: 3000,
           hideProgressBar: true,
           closeOnClick: true,
@@ -89,9 +102,9 @@ const ComicDetails = () => {
         });
       }
     } catch (error) {
-      console.error('Error adding comic to collection:', error);
-      toast.error('Error adding comic to collection', {
-        position: 'top-right',
+      console.error("Error adding comic to collection:", error);
+      toast.error("Error adding comic to collection", {
+        position: "top-right",
         autoClose: 3000,
         hideProgressBar: true,
         closeOnClick: true,
@@ -115,16 +128,20 @@ const ComicDetails = () => {
                   <img
                     src={comic.image}
                     alt={comic.title}
-                    className="w-full h-60 object-contain rounded-lg mb-4" // Adjusted styling for the image
+                    className="w-full h-60 object-contain rounded-lg mb-4"
                   />
-                  <h2 className="text-2xl font-bold mb-4 text-white">{comic.title}</h2>
-                  <p className="text-gray-500 mb-2 text-white">Release Year: {comic.release_date}</p>
+                  <h2 className="text-2xl font-bold mb-4 text-white">
+                    {comic.title}
+                  </h2>
+                  <p className="text-gray-500 mb-2 text-white">
+                    Release Year: {comic.release_date}
+                  </p>
                   <p className="text-white mb-4">{comic.comic_description}</p>
                   <div className="flex justify-between mt-4">
                     <button
                       type="button"
                       className="bg-blue-500 text-white px-4 py-2 rounded"
-                      onClick={() => router.push('/comics')}
+                      onClick={() => router.push("/comics")}
                     >
                       Go back to Comics
                     </button>
@@ -137,7 +154,6 @@ const ComicDetails = () => {
                     </button>
                   </div>
                   {/* Pass the comicId to the ComicReviews component */}
-                  <ComicReviews comicId={comic.id} />
                 </>
               ) : (
                 <p className="text-white">Comic not found.</p>
@@ -149,7 +165,6 @@ const ComicDetails = () => {
       <ToastContainer />
     </>
   );
-  
 };
 
 export default ComicDetails;

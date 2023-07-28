@@ -33,18 +33,29 @@ export default function Login() {
         },
         body: JSON.stringify(values),
       });
-  
+
       if (!response.ok) {
         // Check if the response status is not OK (i.e., 2xx)
         throw new Error("Login failed");
       }
-  
+
       const data = await response.json();
-  
+
       // Check if the data contains an "id" property, assuming it's the user ID
       if (data.id) {
         // Call logIn with the ID value
         logIn(data.id);
+
+        // Set the 'user_id' and 'cookie_value' cookies
+        const userId = data.id;
+        const cookieValue = data.cookie_value;
+        document.cookie = `user_id=${userId}; expires=${new Date(
+          Date.now() + 24 * 60 * 60 * 1000
+        ).toUTCString()}; secure; samesite=None`;
+        document.cookie = `cookie_value=${cookieValue}; expires=${new Date(
+          Date.now() + 24 * 60 * 60 * 1000
+        ).toUTCString()}; secure; samesite=None`;
+
         console.log(data);
         // Redirect to the root URL after successful login
         router.push("/");
@@ -62,7 +73,7 @@ export default function Login() {
       setSubmitting(false);
     }
   };
-  
+
   const handleRegister = () => {
     router.push("/register");
   };
@@ -82,7 +93,10 @@ export default function Login() {
               <Form>
                 {/* Email Field */}
                 <div className="mb-4">
-                  <label htmlFor="email" className="block mb-2 font-medium text-black">
+                  <label
+                    htmlFor="email"
+                    className="block mb-2 font-medium text-black"
+                  >
                     Email
                   </label>
                   <Field
@@ -100,7 +114,10 @@ export default function Login() {
 
                 {/* Password Field */}
                 <div className="mb-4">
-                  <label htmlFor="password" className="block mb-2 font-medium text-black">
+                  <label
+                    htmlFor="password"
+                    className="block mb-2 font-medium text-black"
+                  >
                     Password
                   </label>
                   <Field
@@ -121,7 +138,7 @@ export default function Login() {
                   className="bg-blue-500 text-white px-4 py-2 rounded w-full"
                   disabled={isSubmitting} // Disable the button while submitting
                 >
-                  {isSubmitting ? 'Logging In...' : 'Login'}
+                  {isSubmitting ? "Logging In..." : "Login"}
                 </button>
 
                 {/* Always show the "Register here" link */}

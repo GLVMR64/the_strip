@@ -128,7 +128,6 @@ class Registration(Resource):
             return make_response({"message": str(e)}, 400)
 
 
-
 # Use a different route for the Registration resource
 api.add_resource(Registration, '/register')  # Change the route to '/register'
 
@@ -163,18 +162,18 @@ def login():
             'id': user.id,
             'name': user.name,
             'email': user.email,
+            'cookie_value': cookie_value,
             # Add other fields as needed
         })
         response.set_cookie('user_id', str(user.id),
-                            expires=datetime.utcnow() + timedelta(hours=24),
-                            secure=True, samesite='None')
+                            expires=datetime.utcnow() + timedelta(hours=24))
         response.set_cookie('cookie_value', cookie_value,
-                            expires=datetime.utcnow() + timedelta(hours=24),
-                            secure=True, samesite='None')
+                            expires=datetime.utcnow() + timedelta(hours=24))
 
-        # Update the user's cookie value in the database
-        user.cookie_value = cookie_value
+        # Update the user's cookie value in the database and commit the changes
         user.cookie_expiration = datetime.utcnow() + timedelta(hours=24)
+        user.user_cookie = cookie_value
+        db.session.add(user)  # Add the user object to the session
         db.session.commit()
 
         return response, 200
@@ -183,16 +182,17 @@ def login():
         return make_response({"message": str(e)}, 400)
 
 
-
 @app.route('/comics/<int:comic_id>/add-review', methods=['POST'])
 def add_review(comic_id):
     data = request.get_json()
 
-    # Get the user_id from the 'user_id' cookie in the request
+    # Get the user_id and cookie_value from the cookies in the request
     user_id_cookie = request.cookies.get('user_id')
+    cookie_value_cookie = request.cookies.get('cookie_value')
 
-    # Check if the user is authenticated
-    if user_id_cookie is None:
+    # Check if both user_id and cookie_value cookies exist
+    if user_id_cookie is None or cookie_value_cookie is None:
+        print(user_id_cookie, cookie_value_cookie)
         return jsonify({"error": "User not authenticated."}), 401
 
     # Try to convert the user_id_cookie to an integer
@@ -200,6 +200,14 @@ def add_review(comic_id):
         user_id = int(user_id_cookie)
     except ValueError:
         return jsonify({"error": "Invalid user_id in cookie."}), 401
+
+    # Fetch the user from the database using the user_id and cookie_value
+    user = User.query.filter_by(
+        id=user_id, user_cookie=cookie_value_cookie).first()
+
+    # Check if the user exists and the cookie_value is valid
+    if not user:
+        return jsonify({"error": "Invalid user credentials."}), 401
 
     if 'review' in data:
         review_text = data['review']
@@ -220,7 +228,7 @@ def add_review(comic_id):
         return jsonify({"error": "Review data is missing."}), 400
 
 
-@app.route('/comics/<int:comic_id>/reviews', methods=['GET'])
+@app.route('/comics/<int:comic_id>/add-reviews', methods=['GET'])
 def get_comic_reviews(comic_id):
     comic = Comic.query.get(comic_id)
     if not comic:
