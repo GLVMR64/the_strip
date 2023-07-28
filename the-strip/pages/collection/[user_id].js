@@ -12,25 +12,31 @@ export default function CollectionsPage() {
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [reviewText, setReviewText] = useState("");
 
-  useEffect(() => {
-    // Fetch the user's collection data based on the ID
-    const fetchCollectionData = async () => {
-      try {
-        const response = await fetch(`http://127.0.0.1:5555/collection/${user_id}`);
-        if (response.ok) {
-          const data = await response.json();
-          setCollectionData(data);
-          setUserCollection(data.map((comic) => comic.id));
-
-          // Update the user context with the collection data
-          updateUserContext({ ...user, collectionData: data });
-        } else {
-          console.error("Failed to fetch collection data:", response.status);
-        }
-      } catch (error) {
-        console.error("Failed to fetch collection data:", error);
+  // Move the fetchCollectionData function outside the useEffect hook
+  const fetchCollectionData = async () => {
+    try {
+      const response = await fetch(`http://127.0.0.1:5555/collection/${user_id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setCollectionData(data);
+        setUserCollection(data.map((comic) => comic.id));
+        // Update the user context with the collection data
+        updateUserContext({ ...user, collectionData: data });
+      } else {
+        console.error("Failed to fetch collection data:", response.status);
       }
-    };
+    } catch (error) {
+      console.error("Failed to fetch collection data:", error);
+    }
+  };
+
+  useEffect(() => {
+    // Check if the user is logged in before fetching collection data
+    if (!user) {
+      // If the user is not logged in, redirect to the login page
+      router.push("/login");
+      return; // Exit early
+    }
 
     if (user_id) {
       fetchCollectionData();
@@ -56,12 +62,6 @@ export default function CollectionsPage() {
 
   const handleAddReview = async (comicId) => {
     try {
-      // Check if the user is authenticated (you can modify this based on your user context implementation)
-      if (!user || !user.loggedIn) {
-        console.error("User not authenticated.");
-        return;
-      }
-
       const response = await fetch(
         `http://127.0.0.1:5555/comics/${comicId}/add-review`,
         {
@@ -69,7 +69,7 @@ export default function CollectionsPage() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ review: reviewText, user_id: user.id }), // Include the user_id in the request body
+          body: JSON.stringify({ review: reviewText }),
         }
       );
 

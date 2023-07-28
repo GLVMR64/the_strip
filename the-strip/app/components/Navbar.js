@@ -5,15 +5,26 @@ import { useRouter } from "next/router";
 
 export default function Navbar() {
   const router = useRouter();
-  const { logOut, user } = useContext(UserContext);
+  const { logOut, user, updateUserContext } = useContext(UserContext);
 
   const handleLogout = async () => {
-    logOut({
-      loggedIn: false,
-    });
-    console.log(user);
-    await router.push("/login");
-    
+    try {
+      // Perform any logout logic here (e.g., calling an API to invalidate tokens, etc.)
+      // ...
+
+      // After successful logout, update the user context to clear the user data
+      updateUserContext({
+        loggedIn: false,
+        id: null,
+        name: null,
+        // Add any other user data fields you have in the context
+      });
+
+      // Redirect to the login page
+      await router.push("/login");
+    } catch (error) {
+      console.error("Error during logout:", error);
+    }
   };
 
   // Check if the user object exists before accessing its 'id' property
@@ -47,7 +58,7 @@ export default function Navbar() {
               </Link>
             </li>
             <li className="nav-item">
-              <Link href={`/collection/${userId}`}>
+            <Link href={`/collection/${userId}`}>
                 <span className="text-white text-2xl font-bold cursor-pointer hover:text-white hover:bg-red-500 hover:bg-opacity-100 px-4 py-2 rounded">
                   My Collection
                 </span>
