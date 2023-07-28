@@ -7,10 +7,13 @@ export const UserProvider = ({ children }) => {
   const [loggedIn, setLoggedIn] = useState(false); // New loggedIn state
 
   const updateUserContext = (newUser) => {
-    setUser((prevUser) => ({
-      ...prevUser,
+
+    setUser((prevUser) => {
+      const usr = prevUser ? prevUser : {}
+      return {
+      ...usr,
       ...newUser,
-    }));
+    }});
   };
 
   const logIn = (id) => {
@@ -32,7 +35,7 @@ export const UserProvider = ({ children }) => {
   }, []);
 
   return (
-    <UserContext.Provider value={{ user, loggedIn, logIn, logOut }}>
+    <UserContext.Provider value={{ user, loggedIn, logIn, logOut, updateUserContext }}>
       {children}
     </UserContext.Provider>
   );

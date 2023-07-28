@@ -1,32 +1,37 @@
-import React, { useEffect, useState, useContext } from 'react';
-import { useRouter } from 'next/router';
-import UserContext from '../app/components/utils/UserContext'; // Import the UserContext
-import Navbar from '../app/components/Navbar';
-
+import React, { useEffect, useState, useContext } from "react";
+import { useRouter } from "next/router";
+import UserContext from "../app/components/utils/UserContext"; // Import the UserContext
+import Navbar from "../app/components/Navbar";
 
 const Comics = () => {
   const router = useRouter();
   const [comics, setComics] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
 
   // Retrieve the user ID and cookie value from the UserContext
   const { user } = useContext(UserContext);
   const userId = user?.id;
   const cookieValue = user?.cookieValue;
-
+ 
   useEffect(() => {
     const fetchComics = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:5555/comics');
-        if (response.ok) {
-          const data = await response.json();
-          setComics(data);
-        } else {
-          console.error('Error fetching comics:', response);
+        if (user) {
+          const response = await fetch("http://127.0.0.1:5555/comics");
+          if (response.ok) {
+            const data = await response.json();
+            setComics(data);
+          } else {
+            console.error("Error fetching comics:", response);
+            
+          }
+        }
+        else {
+          router.push('/register')
         }
       } catch (error) {
-        console.error('Error fetching comics:', error);
+        console.error("Error fetching comics:", error);
       } finally {
         setLoading(false);
       }
@@ -78,8 +83,14 @@ const Comics = () => {
                     className="p-4 border rounded-lg cursor-pointer hover:shadow-md bg-white"
                     onClick={() => handleComicClick(comic.id)}
                   >
-                    <h3 className="mt-2 text-lg font-semibold text-black">{comic.title}</h3>
-                    <img src={comic.image} alt={comic.title} className="w-full h-64 object-contain" />
+                    <h3 className="mt-2 text-lg font-semibold text-black">
+                      {comic.title}
+                    </h3>
+                    <img
+                      src={comic.image}
+                      alt={comic.title}
+                      className="w-full h-64 object-contain"
+                    />
                   </div>
                 ))
               )}

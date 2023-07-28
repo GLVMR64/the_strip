@@ -1,12 +1,14 @@
-import React from "react";
+import React, {useContext} from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
+import { UserContext }from "../app/components/utils/UserContext";
 
 export default function Register() {
   const router = useRouter();
+  const { updateUserContext } = useContext(UserContext);
 
   // Initial form values
   const initialValues = {
@@ -23,30 +25,34 @@ export default function Register() {
   });
 
   const onSubmit = async (values, { setErrors }) => {
-    try {
-      const response = await fetch("http://127.0.0.1:5555/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(values),
-      });
-  
-      if (response.ok) {
-        // Redirect to the home page after successful registration
-        router.push("/");
-      } else if (response.status === 400) {
-        // Handle validation errors
-        const errors = await response.json();
-        setErrors(errors);
-      } else {
-        // Handle other error cases
-        console.error("Registration failed:", response.status);
-      }
-    } catch (error) {
-      console.error("Registration failed:", error);
+  try {
+    const response = await fetch("http://127.0.0.1:5555/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(values),
+    });
+
+    if (response.ok || response.status === 201) { // Handle 201 status code
+      const newUser = await response.json();
+      updateUserContext(newUser);
+
+      // Redirect to the home page after successful registration
+      router.push("/");
+    } else if (response.status === 400) {
+      // Handle validation errors
+      const errors = await response.json();
+      setErrors(errors);
+    } else {
+      // Handle other error cases
+      console.error("Registration failed:", response.status);
     }
-  };
+  } catch (error) {
+    console.error("Registration failed:", error);
+  }
+};
+
   
 
   return (

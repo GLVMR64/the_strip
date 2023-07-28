@@ -5,7 +5,7 @@ from flask_migrate import Migrate
 from datetime import datetime, timedelta
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash
-from models import db, User, Comic, UserComic, Review
+from models import db, User, Comic, Review
 
 import hashlib
 import secrets
@@ -76,46 +76,57 @@ def get_comic(comic_id):
 class Registration(Resource):
     def post(self):
         data = request.get_json()
+        try:
+            # Extract user information from the request data
+            name = data['name']
+            email = data['email']
+            password = data['password']
 
-        # Extract user information from the request data
-        name = data['name']
-        email = data['email']
-        password = data['password']
+            # Check if a user with the same email already exists
+            existing_user = User.query.filter_by(email=email).first()
+            if existing_user:
+                return {'message': 'User with the same email already exists'}, 409
 
-        # Check if a user with the same email already exists
-        existing_user = User.query.filter_by(email=email).first()
-        if existing_user:
-            return {'message': 'User with the same email already exists'}, 409
+            # Hash the password
+            password_hash = generate_password_hash(password, method='sha256')
 
-        # Hash the password
-        password_hash = generate_password_hash(password, method='sha256')
+            # Create a new User object and save it to the database
+            user = User(name=name, email=email, password_hash=password_hash)
 
-        # Create a new User object and save it to the database
-        user = User(name=name, email=email, password_hash=password_hash)
+            # Generate a random cookie value
+            cookie_value = secrets.token_hex(16)
 
-        # Generate a random cookie value
-        cookie_value = secrets.token_hex(16)
+            db.session.add(user)
+            db.session.commit()
 
-        # Set the user's cookie value and expiration time
-        response = make_response(
-            jsonify({'message': 'User registered successfully'}), 201)
-        response.set_cookie('user_id', str(user.id),
-                            expires=datetime.utcnow() + timedelta(hours=24),
-                            secure=True, samesite='None')
-        response.set_cookie('cookie_value', cookie_value,
-                            expires=datetime.utcnow() + timedelta(hours=24),
-                            secure=True, samesite='None')
+            # Return the user data as a dictionary in the response
+            user_data = {
+                'id': user.id,
+                'name': user.name,
+                'email': user.email,
+                # Add other fields you want to include in the serialized user data
+                # For example: 'created_at', 'updated_at', etc.
+            }
 
-        user.cookie_value = cookie_value
-        user.cookie_expiration = datetime.utcnow(
-        ) + timedelta(hours=24)  # Set the expiration time
+            # Set the user's cookie value and expiration time
+            response = make_response(jsonify(user_data), 201)
+            response.set_cookie('user_id', str(user.id),
+                                expires=datetime.utcnow() + timedelta(hours=24),
+                                secure=True, samesite='None')
+            response.set_cookie('cookie_value', cookie_value,
+                                expires=datetime.utcnow() + timedelta(hours=24),
+                                secure=True, samesite='None')
 
-        db.session.add(user)
-        db.session.commit()
+            user.cookie_value = cookie_value
+            user.cookie_expiration = datetime.utcnow(
+            ) + timedelta(hours=24)  # Set the expiration time
 
-        # Redirect to the home page after successful registration
-        response.headers['Location'] = '/'
-        return response
+            # Redirect to the home page after successful registration
+            response.headers['Location'] = '/'
+            return response
+        except Exception as e:
+            return make_response({"message": str(e)}, 400)
+
 
 
 # Use a different route for the Registration resource
@@ -125,57 +136,52 @@ api.add_resource(Registration, '/register')  # Change the route to '/register'
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
+    try:
+        # Extract user information from the request data
+        email = data.get('email')
+        password = data.get('password')
 
-    # Extract user information from the request data
-    email = data.get('email')
-    password = data.get('password')
+        if not email or not password:
+            return jsonify({'message': 'Email and password are required'}), 400
 
-    if not email or not password:
-        return jsonify({'message': 'Email and password are required'}), 400
+        # Validate the input data using the validation schema or any other validation method
 
-    # Validate the input data using the validation schema or any other validation method
+        # Check if a user with the given email exists
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            return jsonify({'message': 'Invalid email or password'}), 400
 
-    # Check if a user with the given email exists
-    user = User.query.filter_by(email=email).first()
-    if not user:
-        return jsonify({'message': 'Invalid email or password'}), 400
+        # Check if the password is correct
+        if not user.check_password(password):
+            return jsonify({'message': 'Invalid email or password'}), 400
 
-    # Check if the password is correct
-    if not user.check_password(password):
-        return jsonify({'message': 'Invalid email or password'}), 400
+        # Generate a new cookie value
+        cookie_value = secrets.token_hex(16)
 
-    # Generate a new cookie value
-    cookie_value = secrets.token_hex(16)
+        # Set the cookie in the response with an expiration time of 24 hours
+        response = jsonify({
+            'id': user.id,
+            'name': user.name,
+            'email': user.email,
+            # Add other fields as needed
+        })
+        response.set_cookie('user_id', str(user.id),
+                            expires=datetime.utcnow() + timedelta(hours=24),
+                            secure=True, samesite='None')
+        response.set_cookie('cookie_value', cookie_value,
+                            expires=datetime.utcnow() + timedelta(hours=24),
+                            secure=True, samesite='None')
 
-    # Set the cookie in the response with an expiration time of 24 hours
-    response = jsonify({
-        'message': 'Login successful',
-        'id': f"{user.id}"
-    })
+        # Update the user's cookie value in the database
+        user.cookie_value = cookie_value
+        user.cookie_expiration = datetime.utcnow() + timedelta(hours=24)
+        db.session.commit()
 
-    response.set_cookie('user_id', str(user.id),
-                        expires=datetime.utcnow() + timedelta(hours=24),
-                        secure=True, samesite='None')
-    response.set_cookie('cookie_value', cookie_value,
-                        expires=datetime.utcnow() + timedelta(hours=24),
-                        secure=True, samesite='None')
+        return response, 200
 
-    # Update the user's cookie value in the database
-    user.cookie_value = cookie_value
-    user.cookie_expiration = datetime.utcnow() + timedelta(hours=24)
-    db.session.commit()
+    except Exception as e:
+        return make_response({"message": str(e)}, 400)
 
-    # Debug statements to verify cookie is being set correctly
-    print(f"User ID: {user.id}")
-    print(f"Cookie value: {cookie_value}")
-
-    return response, 200
-
-    # Debug statements to verify cookie is being set correctly
-    print(f"User ID: {user.id}")
-    print(f"Cookie value: {cookie_value}")
-
-    return response, 200
 
 
 @app.route('/comics/<int:comic_id>/add-review', methods=['POST'])
@@ -298,25 +304,25 @@ def delete_comic_from_collection(user_id, comic_id):
     return jsonify({'message': 'Comic successfully removed from the user\'s collection'}), 200
 
 
-@app.route('/user', methods=['POST'])
-def get_user_data():
-    data = request.get_json()
+# @app.route('/user', methods=['POST'])
+# def get_user_data():
+#     data = request.get_json()
 
-    email = data.get('email')
+#     email = data.get('email')
 
-    if email:
-        user = User.query.filter_by(email=email).first()
-        if user:
-            serialized_user = {
-                "email": user.email,
-                "name": user.name,
-                # Add more fields as needed
-            }
-            return jsonify(serialized_user), 200
-        else:
-            return jsonify({"error": "User not found"}), 404
-    else:
-        return jsonify({"error": "Email parameter missing"}), 400
+#     if email:
+#         user = User.query.filter_by(email=email).first()
+#         if user:
+#             serialized_user = {
+#                 "email": user.email,
+#                 "name": user.name,
+#                 # Add more fields as needed
+#             }
+#             return jsonify(serialized_user), 200
+#         else:
+#             return jsonify({"error": "User not found"}), 404
+    # else:
+    #     return jsonify({"error": "Email parameter missing"}), 400
 
 
 @app.route('/collection/<int:user_id>/edit-name', methods=['PATCH'])

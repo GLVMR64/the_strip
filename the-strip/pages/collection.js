@@ -13,11 +13,11 @@ export default function Collection() {
     // Fetch the user's collection data based on the ID
     const fetchCollectionData = async () => {
       try {
-        const response = await fetch(`http://127.0.0.1:5555/collection/${id}`); 
+        const response = await fetch(`/collection/${user_id}`);
         if (response.ok) {
           const data = await response.json();
           setCollectionData(data);
-          setUserCollection(data.map((comic) => comic.id)); // Extract the comic IDs in the user's collection
+          setUserCollection(data.map((comic) => comic.id));
         } else {
           console.error('Failed to fetch collection data:', response.status);
         }
