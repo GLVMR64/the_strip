@@ -13,13 +13,15 @@ const Collection = () => {
   const [newName, setNewName] = useState("");
   const [showEditForm, setShowEditForm] = useState(false);
   const [reviewText, setReviewText] = useState("");
-  const [selectedRating, setSelectedRating] = useState(0);
+
   const [showReviewForm, setShowReviewForm] = useState(false);
   const router = useRouter();
 
   const fetchCollection = async () => {
     try {
-      const response = await fetch(`http://127.0.0.1:5555/collection/${user.id}`);
+      const response = await fetch(
+        `http://127.0.0.1:5555/collection/${user.id}`
+      );
       if (!response.ok) {
         throw new Error("Failed to fetch collection");
       }
@@ -41,13 +43,16 @@ const Collection = () => {
     event.preventDefault();
 
     try {
-      const response = await fetch(`http://127.0.0.1:5555/collection/${user.id}/edit-name`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ name: newName }),
-      });
+      const response = await fetch(
+        `http://127.0.0.1:5555/collection/${user.id}/edit-name`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ name: newName }),
+        }
+      );
 
       if (response.ok) {
         toast.success("Account updated successfully.");
@@ -79,12 +84,17 @@ const Collection = () => {
 
   const removeFromCollection = async (comicId) => {
     try {
-      const response = await fetch(`http://127.0.0.1:5555/collection/${user.id}/${comicId}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        `http://127.0.0.1:5555/collection/${user.id}/${comicId}`,
+        {
+          method: "DELETE",
+        }
+      );
 
       if (response.ok) {
-        setCollection((prevCollection) => prevCollection.filter((comic) => comic.id !== comicId));
+        setCollection((prevCollection) =>
+          prevCollection.filter((comic) => comic.id !== comicId)
+        );
         toast.success("Comic removed from collection successfully.");
       } else {
         throw new Error("Failed to remove comic from collection");
@@ -96,19 +106,21 @@ const Collection = () => {
 
   const handleAddReview = async (comicId, reviewText) => {
     try {
-      const response = await fetch(`http://127.0.0.1:5555/comics/${comicId}/add-review`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ review: reviewText }),
-      });
-  
+      const response = await fetch(
+        `http://127.0.0.1:5555/comics/${comicId}/add-review`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ review: reviewText }),
+        }
+      );
+
       if (response.ok) {
         toast.success("Review added successfully.");
         setShowReviewForm(false);
         setReviewText("");
-        setSelectedRating(0);
       } else {
         throw new Error("Failed to add review");
       }
@@ -116,7 +128,6 @@ const Collection = () => {
       console.error("Error adding review:", error);
     }
   };
-  
 
   return (
     <>
@@ -164,7 +175,12 @@ const Collection = () => {
 
           {loading ? (
             <div className="flex items-center justify-center min-h-screen">
-              <ReactLoading type="spin" color="#ffffff" height={80} width={80} />
+              <ReactLoading
+                type="spin"
+                color="#ffffff"
+                height={80}
+                width={80}
+              />
             </div>
           ) : collection.length > 0 ? (
             collection.map((comic) => (
@@ -200,22 +216,7 @@ const Collection = () => {
                         className="w-full p-2 border border-gray-300 rounded resize-none"
                         placeholder="Write your review here"
                       />
-                      <div className="mt-2">
-                        <p className="text-sm mb-1">Rating:</p>
-                        <div className="flex items-center">
-                          {Array.from({ length: 5 }, (_, i) => (
-                            <button
-                              key={i}
-                              onClick={() => setSelectedRating(i + 1)}
-                              className={`text-xl ${
-                                i < selectedRating ? "text-yellow-400" : "text-gray-400"
-                              } focus:outline-none`}
-                            >
-                              ★
-                            </button>
-                          ))}
-                        </div>
-                      </div>
+                      <div className="mt-2"></div>
                       <button
                         className="bg-blue-500 text-white px-4 py-2 rounded mt-4"
                         onClick={() => handleAddReview(comic.id)}
