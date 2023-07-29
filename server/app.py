@@ -7,6 +7,7 @@ from flask_cors import CORS
 from werkzeug.security import generate_password_hash
 from models import db, User, Comic, Review
 
+import ipdb
 import hashlib
 import secrets
 import os
@@ -185,6 +186,7 @@ def login():
 @app.route('/comics/<int:comic_id>/add-review', methods=['POST'])
 def add_review(comic_id):
     data = request.get_json()
+    # ipdb.set_trace()
 
     # Get the user_id and cookie_value from the cookies in the request
     user_id_cookie = request.cookies.get('user_id')

@@ -5,6 +5,8 @@ import { useRouter } from "next/router";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import { UserContext } from "../app/components/utils/UserContext";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function Register() {
   const router = useRouter();
@@ -23,7 +25,9 @@ export default function Register() {
     email: Yup.string()
       .email("Invalid email address")
       .required("Email is required"),
-    password: Yup.string().required("Password is required"),
+    password: Yup.string()
+      .required("Password is required")
+      .min(8, "Password must be at least 8 characters long"),
   });
 
   const onSubmit = async (values, { setErrors }) => {
@@ -47,6 +51,9 @@ export default function Register() {
         // Handle validation errors
         const errors = await response.json();
         setErrors(errors);
+      } else if (response.status === 409) {
+        // Email already taken
+        toast.error("This email is already taken");
       } else {
         // Handle other error cases
         console.error("Registration failed:", response.status);
@@ -118,13 +125,7 @@ export default function Register() {
                   className="text-red-500"
                 />
               </div>
-              {/* Link to login page */}
-              <div className="text-center mt-4">
-                Already have an account?{" "}
-                <Link href="/login">
-                  <a className="text-purple-500">Login here</a>
-                </Link>
-              </div>
+
               <button
                 type="submit"
                 className="bg-gradient-to-r from-green-500 to-red-500 text-white px-4 py-2 rounded mt-4 w-full"
@@ -133,8 +134,16 @@ export default function Register() {
               </button>
             </Form>
           </Formik>
+          {/* Link to login page */}
+          <div className="text-center mt-4">
+            Already have an account?{" "}
+            <Link href="/login">
+              <a className="text-purple-500">Login here</a>
+            </Link>
+          </div>
         </div>
       </div>
+      <ToastContainer />
     </div>
   );
 }
